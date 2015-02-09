@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aspect
+    xmlns="http://www.crowdfusion.com/schema/aspect"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.crowdfusion.com/schema/aspect http://www.crowdfusion.com/schema/crowdfusion-aspect-2.0.xsd">
+    <info>
+        <name>Mixin: Crowd Fusion - Track Active Edits</name>
+        <description>Use this mixin to enable concurrent active edit tracking for the element.</description>
+        <elementmode>many</elementmode>
+    </info>
+</aspect>

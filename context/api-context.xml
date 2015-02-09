@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<context
+    xmlns="http://www.crowdfusion.com/schema/context"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.crowdfusion.com/schema/context http://www.crowdfusion.com/schema/crowdfusion-context-2.0.xsd">
+
+    <events>
+        <bind name="Node.@active-edits.bind" ref="ActiveEditAddHandler" method="processActiveEditBind" priority="10"/>
+        <bind name="Node.@active-edits.add.pre" ref="ActiveEditAddHandler" method="processActiveEditAdd" priority="10"/>
+        <bind name="Dispatcher.preAction" ref="ActiveEditHeartbeatHandler" method="processActiveEditHeartbeat" priority="10"/>
+    </events>
+</context>

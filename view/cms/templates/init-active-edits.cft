@@ -1,0 +1,26 @@
+{% begin noresults %}
+
+    {% if Data:CONTROL_ACTION_METHOD !eq 'add' %}
+
+    <script language="JavaScript" type="text/javascript">
+        $(document).ready( function() {
+            ActiveEdits.init(document.taggableRecord,{
+                AddNonce : '{% filter nonce?action=node-add %}',
+                DeleteNonce : '{% filter nonce?action=node-delete %}',
+                UpdateMetaNonce : '{% filter nonce?action=node-update-meta %}',
+                ServerDate : '{% filter date-format?value=now&storage=true&format=Y-m-d\TH:i:sP %}',
+                {% filter activeeditconfig %}
+            });
+
+            var tr = $('#app-content table.data tbody tr.collapsed.highlight');
+            if(tr.length > 0) {
+                tr.bind('close',function(){
+                    ActiveEdits.removeMe();
+                });
+            }
+        });
+    </script>
+
+    {% endif %}
+
+{% end %}

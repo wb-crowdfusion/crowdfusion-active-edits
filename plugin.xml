@@ -1,0 +1,55 @@
+<?xml version='1.0'?>
+<plugin
+    xmlns="http://www.crowdfusion.com/schema/plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.crowdfusion.com/schema/plugin http://www.crowdfusion.com/schema/crowdfusion-plugin-2.0.xsd">
+    <info>
+        <title>Crowd Fusion - Active Edits</title>
+        <provider>Crowd Fusion, Inc.</provider>
+        <description>This plugin provides functionality for tracking concurrent active edits to records. TEST</description>
+        <priority>10</priority>
+        <version>1.4.0</version>
+        <license>Crowd Fusion Enterprise Plugin</license>
+        <dependencies></dependencies>
+        <cfversions>2.1.x</cfversions>
+        <homepage>http://crowdfusion.com/</homepage>
+    </info>
+
+    <config>
+        <![CDATA[
+$properties['active.edit.heartbeat.frequency'] = 60;
+$properties['active.edit.list.check.frequency'] = 30;
+$properties['active.edit.stale.threshold'] = 45;
+$properties['active.edit.max'] = 50;
+
+$properties['history.ignoreTagRole.active-edit-record'] = true;
+
+        ]]>
+    </config>
+
+    <elements>
+        <element slug="active-edit">
+            <info>
+                <name>Active Edit</name>
+                <description/>
+                <default_order>ActiveDate DESC</default_order>
+                <allow_slug_slashes>true</allow_slug_slashes>
+                <base_url>active-edit/</base_url>
+            </info>
+            <aspects>
+                <aspect slug="active-edits"/>
+            </aspects>
+        </element>
+
+    </elements>
+
+    <permissions>
+        <permission slug="active-edit-list" title="List Active Edits" />
+        <permission slug="active-edit-delete" title="Delete Active Edit" />
+    </permissions>
+
+    <cmsnavitems>
+        <item label="Active Edits" uri="active-edits/" parent_slug="settings" slug="active-edits" permissions="active-edit-list"/>
+    </cmsnavitems>
+
+</plugin>
