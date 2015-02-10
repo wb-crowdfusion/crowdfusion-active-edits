@@ -1,0 +1,19 @@
+{
+  "name": "wb-crowdfusion/crowdfusion-active-edits",
+  "type": "crowdfusion-plugin",
+  "description": "Provides functionality for tracking concurrent active edits to records.",
+  "license": "Apache-2.0",
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "http://satis.wbdevops.com/"
+    }
+  ],
+  "require": {
+    "php": ">=5.4",
+    "wb-crowdfusion/crowdfusion": "~3.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4.3"
+  }
+}
