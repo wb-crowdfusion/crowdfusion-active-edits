@@ -22,54 +22,51 @@
  *
  * @package     CrowdFusion
  */
-
-
-
-class ActiveEditHeartbeatHandler {
-
-
-    protected $Request;
-    protected $NodeRefService;
-    protected $NodeService;
+class ActiveEditHeartbeatHandler
+{
     protected $DateFactory;
+    protected $Request;
+    protected $PrimaryCacheStore;
 
+    /**
+     * @param DateFactory $DateFactory
+     */
     public function setDateFactory(DateFactory $DateFactory)
     {
         $this->DateFactory = $DateFactory;
     }
 
+    /**
+     * @param Request $Request
+     */
     public function setRequest(Request $Request)
     {
         $this->Request = $Request;
     }
 
-    public function setNodeRefService(NodeRefService $NodeRefService)
+    /**
+     * @param CacheStoreInterface $PrimaryCacheStore
+     */
+    public function setPrimaryCacheStore(CacheStoreInterface $PrimaryCacheStore)
     {
-        $this->NodeRefService = $NodeRefService;
+        $this->PrimaryCacheStore = $PrimaryCacheStore;
     }
 
-    public function setNodeService(NodeService $NodeService)
-    {
-        $this->NodeService = $NodeService;
-    }
-
-    /////////////////////
-    // HANDLER ACTIONS //
-    /////////////////////
-
-    /* Bound to "Dispatcher.preAction" for updating ActiveDate (heartbeat) of active edit record. */
+    /**
+     * Bound to "Dispatcher.preAction" for updating ActiveDate (heartbeat) of active edit record.
+     */
     public function processActiveEditHeartbeat()
     {
         $slug = $this->Request->getParameter('Heartbeat');
 
-        if($slug != null) {
-            $e = $this->NodeRefService->oneFromAspect('active-edits');
-            $activeEdit = $this->NodeService->getByNodeRef(new NodeRef($e->getElement(),$slug));
-            if(!empty($activeEdit)) {
+        if ($slug != null) {
+            $key = sprintf('active-edits-%s', $slug);
+
+            if ($activeEdit = $this->PrimaryCacheStore->get($key)) {
                 $activeEdit->ActiveDate = $this->DateFactory->newStorageDate();
-                $this->NodeService->edit($activeEdit);
+
+                $this->PrimaryCacheStore->put($key, $activeEdit);
             }
         }
     }
-
 }
