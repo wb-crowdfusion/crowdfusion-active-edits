@@ -224,7 +224,6 @@ var ActiveEdits = function() {
             'OutTags.select' : '#active-edit-member',
             'Meta.select' : '#form-changed',
             'OutTags.exist' : taggableRecord.NodeRef+'#active-edit-record',
-            'ActiveDate.after' : (-1*options.StaleActiveEditThreshold)+' seconds',
             'Keys' : 'Cheaters,ActiveDate'
         },{
             CreationDate : 'DESC'
