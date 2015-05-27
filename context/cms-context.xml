@@ -6,6 +6,13 @@
 
     <!--import>shared-context.xml</import-->
 
+    <objects>
+      <object id="ActiveedithearbeatCmsController" class="ActiveEdit\Controller\HeartbeatCmsController">
+        <alias>ActiveedithearbeatCmsController</alias>
+      </object>
+    </objects>
+
+
     <events>
         <bind name="cms-head" ref="ActiveEditAssetHandler" method="generateAsset" priority="1"/>
     </events>
