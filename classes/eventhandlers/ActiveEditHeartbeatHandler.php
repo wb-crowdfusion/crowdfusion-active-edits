@@ -27,6 +27,7 @@ class ActiveEditHeartbeatHandler
     protected $DateFactory;
     protected $Request;
     protected $PrimaryCacheStore;
+    protected $ttl = 1200;
 
     /**
      * @param DateFactory $DateFactory
@@ -57,7 +58,7 @@ class ActiveEditHeartbeatHandler
      */
     public function processActiveEditHeartbeat()
     {
-        $slug = $this->Request->getParameter('Heartbeat');
+        $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '_',$this->Request->getParameter('Heartbeat'));
 
         if ($slug != null) {
             $key = sprintf('active-edits-%s', $slug);
@@ -65,7 +66,7 @@ class ActiveEditHeartbeatHandler
             if ($activeEdit = $this->PrimaryCacheStore->get($key)) {
                 $activeEdit->ActiveDate = $this->DateFactory->newStorageDate();
 
-                $this->PrimaryCacheStore->put($key, $activeEdit);
+                $this->PrimaryCacheStore->put($key, $activeEdit, $this->ttl);
             }
         }
     }
