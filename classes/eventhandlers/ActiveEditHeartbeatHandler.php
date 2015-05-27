@@ -92,8 +92,6 @@ class ActiveEditHeartbeatHandler
             if ($activeEdit) {
                 $activeEdit->ActiveDate = $this->DateFactory->newStorageDate();
 
-                $this->NodeService->edit($activeEdit);
-
                 $this->PrimaryCacheStore->put($key, $activeEdit, $this->ttl);
             }
         }
