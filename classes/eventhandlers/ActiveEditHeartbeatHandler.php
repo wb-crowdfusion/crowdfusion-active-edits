@@ -26,6 +26,8 @@ class ActiveEditHeartbeatHandler
 {
     protected $DateFactory;
     protected $Request;
+    protected $NodeRefService;
+    protected $NodeService;
     protected $PrimaryCacheStore;
     protected $ttl = 1200;
 
@@ -46,6 +48,22 @@ class ActiveEditHeartbeatHandler
     }
 
     /**
+     * @param NodeRefService $NodeRefService
+     */
+    public function setNodeRefService(NodeRefService $NodeRefService)
+    {
+        $this->NodeRefService = $NodeRefService;
+    }
+
+    /**
+     * @param NodeService $NodeService
+     */
+    public function setNodeService(NodeService $NodeService)
+    {
+        $this->NodeService = $NodeService;
+    }
+
+    /**
      * @param CacheStoreInterface $PrimaryCacheStore
      */
     public function setPrimaryCacheStore(CacheStoreInterface $PrimaryCacheStore)
@@ -58,13 +76,23 @@ class ActiveEditHeartbeatHandler
      */
     public function processActiveEditHeartbeat()
     {
-        $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '_',$this->Request->getParameter('Heartbeat'));
+        $slug = $this->Request->getParameter('Heartbeat');
 
         if ($slug != null) {
             $key = sprintf('active-edits-%s', $slug);
 
-            if ($activeEdit = $this->PrimaryCacheStore->get($key)) {
+            // if not in cache, load Node object
+            if (!$activeEdit = $this->PrimaryCacheStore->get($key)) {
+                $e = $this->NodeRefService->oneFromAspect('active-edits');
+
+                $activeEdit = $this->NodeService->getByNodeRef(new NodeRef($e->getElement(), $slug));
+            }
+
+            // if exists, update ActiveDate to now
+            if ($activeEdit) {
                 $activeEdit->ActiveDate = $this->DateFactory->newStorageDate();
+
+                $this->NodeService->edit($activeEdit);
 
                 $this->PrimaryCacheStore->put($key, $activeEdit, $this->ttl);
             }
