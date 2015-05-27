@@ -7,8 +7,8 @@
     <!--import>shared-context.xml</import-->
 
     <objects>
-      <object id="ActiveedithearbeatCmsController" class="ActiveEdit\Controller\HeartbeatCmsController">
-        <alias>ActiveedithearbeatCmsController</alias>
+      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEdit\Controller\HeartbeatCmsController">
+        <alias>ActiveeditheartbeatCmsController</alias>
       </object>
     </objects>
 
