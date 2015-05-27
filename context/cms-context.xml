@@ -7,11 +7,8 @@
     <!--import>shared-context.xml</import-->
 
     <objects>
-      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController">
-        <alias>ActiveeditheartbeatCmsController</alias>
-      </object>
+      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController" />
     </objects>
-
 
     <events>
         <bind name="cms-head" ref="ActiveEditAssetHandler" method="generateAsset" priority="1"/>
