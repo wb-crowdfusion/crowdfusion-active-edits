@@ -17,7 +17,7 @@
  * @version     $Id$
  */
 
-namespace CrowdFusion\ActiveEdit\Controller;
+namespace CrowdFusion\ActiveEditsPlugin\Controller;
 
  /**
  * Store list of active members per slug in cache

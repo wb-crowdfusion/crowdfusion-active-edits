@@ -7,7 +7,7 @@
     <!--import>shared-context.xml</import-->
 
     <objects>
-      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEdit\Controller\HeartbeatCmsController">
+      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController">
         <alias>ActiveeditheartbeatCmsController</alias>
       </object>
     </objects>
