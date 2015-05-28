@@ -155,8 +155,19 @@ class HeartbeatCmsController extends \AbstractCmsController
                 /** @var \Node $user */
                 $user = $this->RequestContext->getUser();
 
-                if (!isset($members[$user->Slug])) {
-                    $members[$user->Slug] = array(
+                $found = false;
+
+                foreach ($members as $key => $member) {
+                    if ($member['slug'] == $user->Slug) {
+                        $found = $key;
+                        break;
+                    }
+                }
+
+                if ($found !== false) {
+                    $member = $members[$found];
+                } else {
+                    $member = array(
                         'slug'       => $user->Slug,
                         'name'       => $user->Title,
                         'activeDate' => null,
@@ -165,7 +176,13 @@ class HeartbeatCmsController extends \AbstractCmsController
                 }
 
                 // set to now
-                $members[$user->Slug]['activeDate'] = $this->DateFactory->newStorageDate();
+               $member['activeDate'] = $this->DateFactory->newStorageDate();
+
+                if ($found !== false) {
+                    $members[$found] = $member;
+                } else {
+                    $members[] = $member;
+                }
 
                 // update
                 $this->PrimaryCacheStore->put($key, $members, $this->ttl);
