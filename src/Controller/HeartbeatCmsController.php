@@ -45,10 +45,6 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $results = $this->loadMembersFromCache($this->Request->getParameter('slugs'));
 
-        foreach ($results as $slug => $members) {
-            $results[$slug] = count($members);
-        }
-
         echo \JSONUtils::encode($results);
     }
 

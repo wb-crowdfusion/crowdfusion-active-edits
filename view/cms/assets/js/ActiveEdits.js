@@ -72,10 +72,11 @@ var ActiveEdits = function() {
       List.redrawHeadings();
 
       $.each(json, function(slug, members) {
-        if (members === 0) return;
+        if (members.length === 0) return;
 
         var
           tr = $('#app-content table.data tr:[id=' + slug + ']'),
+          tr = tr.length ? tr : $('#app-content table.data tr:[id=collapsed_article-' + slug + ']'),
           td = tr.children('td:eq(' + listTitleIndex + ')'),
           span = $('span.active-edit-count', td);
 
@@ -239,7 +240,7 @@ var ActiveEdits = function() {
   };
 
   var _updateFormChanged = function() {
-    $.post('/active-edits/update-meta', {slug: taggableRecord.Slug}, function(response) {
+    $.post('/active-edits/' + taggableRecord.Slug + '/update-meta', function(response) {
       if (response == 'error') formChanged = false;
     }, 'json');
   };
@@ -277,7 +278,7 @@ var ActiveEdits = function() {
 
     clearInterval(timers.Refresh);
 
-    $.post('/active-edits/remove-member', {slug: taggableRecord.Slug}, function(response) {}, 'json');
+    $.post('/active-edits/' + taggableRecord.Slug + '/remove-member', function(response) {}, 'json');
   };
 
   return {
@@ -287,6 +288,13 @@ var ActiveEdits = function() {
 
     init: function(_taggableRecord, _options) {
       taggableRecord = _taggableRecord;
+
+      taggableRecord.Slug = taggableRecord.Slug.toLowerCase()
+        .replace(/\s+/g, '-')      // Replace spaces with -
+        .replace(/[^\w\-]+/g, '-') // Remove all non-word chars
+        .replace(/\-\-+/g, '-')    // Replace multiple - with single -
+        .replace(/^-+/, '')        // Trim - from start of text
+        .replace(/-+$/, '');       // Trim - from end of text
 
       var m = dateRegEx.exec(taggableRecord.ModifiedDate);
       taggableRecord.ModifiedDate = new Date(m[1], parseInt(m[2]) - 1, m[3], m[4], m[5], m[6]);
