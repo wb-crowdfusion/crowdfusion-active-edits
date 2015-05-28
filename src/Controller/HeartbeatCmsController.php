@@ -55,11 +55,9 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function getMembersAction()
     {
-        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
+        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
 
-        if (count($members) === 1) {
-            $members = current($members);
-        }
+        $members = count($results) === 1 ? current($results) : array();
 
         echo \JSONUtils::encode($members);
     }
@@ -71,11 +69,13 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function removeMemberAction()
     {
-        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'));
-
         $isDeleted = false;
-        if (count($members) === 1) {
-            $slug = current(array_keys($members));
+
+        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
+
+        if (count($results) === 1) {
+            $slug    = current(array_keys($results));
+            $members = current($results);
 
             foreach ($members as $key => $member) {
                 if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
@@ -97,15 +97,23 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function updateMetaAction()
     {
-        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'));
-
         $isUpdated = false;
-        if (count($members) === 1) {
-            $slug    = current(array_keys($members));
-            $members = current($members);
-            $members['updateMeta'] = true;
 
-            $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
+
+        if (count($results) === 1) {
+            $slug    = current(array_keys($results));
+            $members = current($results);
+
+            foreach ($members as $key => $member) {
+                if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
+                    $members[$key]['updateMeta'] = true;
+
+                    $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+
+                    break;
+                }
+            }
         }
 
         echo $isUpdated ? 'success' : 'error';
