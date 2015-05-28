@@ -71,9 +71,21 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function removeMemberAction()
     {
-        $slug = $this->Request->getParameter('slug');
+        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'));
 
-        $isDeleted = $this->PrimaryCacheStore->delete(sprintf('active-edits-%s', $slug));
+        $isDeleted = false;
+        if (count($members) === 1) {
+            $slug = current(array_keys($members));
+
+            foreach ($members as $key => $member) {
+                if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
+                    unset($members[$key]);
+                    break;
+                }
+            }
+
+            $isDeleted = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+        }
 
         echo $isDeleted ? 'success' : 'error';
     }
@@ -85,19 +97,15 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function updateMetaAction()
     {
-        $slug = $this->Request->getParameter('slug');
-
-        $members = $this->loadMembersFromCache($slug, true);
+        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'));
 
         $isUpdated = false;
         if (count($members) === 1) {
+            $slug    = current(array_keys($members));
             $members = current($members);
             $members['updateMeta'] = true;
 
-            $isUpdated = true;
-
-            // update
-            $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+            $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
         }
 
         echo $isUpdated ? 'success' : 'error';
