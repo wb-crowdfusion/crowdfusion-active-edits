@@ -37,6 +37,22 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
+     * Returns list total members for each slug.
+     *
+     * @return string JSON of slug -> count(members)
+     */
+    public function totalMembersAction()
+    {
+        $results = $this->loadMembersFromCache($this->Request->getParameter('slugs'));
+
+        foreach ($results as $slug => $members) {
+            $results[$slug] = count($members);
+        }
+
+        echo \JSONUtils::encode($results);
+    }
+
+    /**
      * Returns list members for a given slug.
      *
      * @return string JSON of members list
@@ -53,19 +69,42 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Returns list total members for each slug.
+     * Removed the current logged-in user for a given slug.
      *
-     * @return string JSON of slug -> count(members)
+     * @return string JSON, success or error
      */
-    public function totalMembersAction()
+    public function removeMemberAction()
     {
-        $results = $this->loadMembersFromCache($this->Request->getParameter('slugs'));
+        $slug = $this->Request->getParameter('slug');
 
-        foreach ($results as $slug => $members) {
-            $results[$slug] = count($members);
+        $isDeleted = $this->PrimaryCacheStore->delete(sprintf('active-edits-%s', $slug));
+
+        echo $isDeleted ? 'success' : 'error';
+    }
+
+    /**
+     * Sets the current logged-in user for a given slug with "updateMeta=true".
+     *
+     * @return string JSON, success or error
+     */
+    public function updateMetaAction()
+    {
+        $slug = $this->Request->getParameter('slug');
+
+        $members = $this->loadMembersFromCache($slug, true);
+
+        $isUpdated = false;
+        if (count($members) === 1) {
+            $members = current($members);
+            $members['updateMeta'] = true;
+
+            $isUpdated = true;
+
+            // update
+            $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
         }
 
-        echo \JSONUtils::encode($results);
+        echo $isUpdated ? 'success' : 'error';
     }
 
     /**
@@ -88,6 +127,8 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         foreach ($slugs as $slug) {
+            $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '-', $slug);
+
             $members = array();
 
             $key = sprintf('active-edits-%s', $slug);
@@ -102,20 +143,23 @@ class HeartbeatCmsController extends \AbstractCmsController
                 /** @var \Node $user */
                 $user = $this->RequestContext->getUser();
 
-                if (!isset($members[$user->ID])) {
-                    $members[$user->ID] = array(
-                        'Name'       => $user->Title,
-                        'ActiveDate' => null,
+                if (!isset($members[$user->Slug])) {
+                    $members[$user->Slug] = array(
+                        'slug'       => $user->Slug,
+                        'name'       => $user->Title,
+                        'activeDate' => null,
+                        'updateMeta' => false,
                     );
                 }
 
-                $members[$user->ID]['ActiveDate'] = $this->DateFactory->newStorageDate();
+                // set to now
+                $members[$user->Slug]['activeDate'] = $this->DateFactory->newStorageDate();
 
-                // save
+                // update
                 $this->PrimaryCacheStore->put($key, $members, $this->ttl);
             }
 
-            $results[$slug] = $members;
+            $results[$slug] = array_values($members);
         }
 
         return $results;

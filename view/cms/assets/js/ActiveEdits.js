@@ -5,11 +5,9 @@ var ActiveEdits = function() {
   var timers = {};
   var taggableRecord = null;
   var formChanged = false;
-  var activeEditNode = null;
   var loadDate = null;
   var listTitleIndex = 1;
   var dateRegEx = /(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)([+-])(\d\d):(\d\d)/;
-  var nodeService = NodeService.getInstance();
 
   var _setOptions = function(_options) {
     options = $.extend({
@@ -25,7 +23,6 @@ var ActiveEdits = function() {
   };
 
   var _initList = function(_options) {
-
     _setOptions(_options);
 
     var $body = $('body');
@@ -54,14 +51,17 @@ var ActiveEdits = function() {
   };
 
   var _refreshList = function() {
-
     var slugs = [];
 
     $('#app-content table.data tr:not(:first-child)').each(function() {
-      slugs.push($(this).attr('id'));
+      var slug = $(this).attr('id');
+      if (slug.substring(0, 18) == 'collapsed_article-') {
+        slug = slug.substring(18);
+      }
+      slugs.push(slug);
     });
 
-    var success = function(json) {
+    $.post('/active-edits/total-members', {slugs: slugs}, function(json) {
 
       // remove all counts
       var spans = $('#app-content table.data tr td span.active-edit-count');
@@ -87,8 +87,8 @@ var ActiveEdits = function() {
           span.text(parseInt(span.text()) + 1);
         }
 
-        $.each(members, function(k, v) {
-          members[k] = { Title: v.Name, Count: 1 }; // count always going to be 1
+        $.each(members, function(i, member) {
+          members[i] = { Title: member.name, Count: 1 }; // count always going to be 1
         });
 
         span.data('memberList', members);
@@ -99,13 +99,10 @@ var ActiveEdits = function() {
           _hideTooltip();
         });
       });
-    };
-
-    $.getJSON('/active-edits/total-members', {slugs: slugs}, success);
+    }, 'json');
   };
 
   var _showTooltip = function(memberList, anchor) {
-
     DOM.tooltipList.empty();
 
     $.each(memberList, function(slug, member) {
@@ -129,10 +126,7 @@ var ActiveEdits = function() {
   };
 
   var _initEdit = function() {
-
-    if (activeEditNode != null) {
-      _removeMe(false); //may have to make this synchronous if ajax requests overlap for list expand
-    }
+    _removeMe(); // may have to make this synchronous if ajax requests overlap for list expand
 
     formChanged = false;
     loadDate = new Date();
@@ -190,20 +184,16 @@ var ActiveEdits = function() {
   };
 
   var _refresh = function(callback) {
-
-    var success = function(members) {
+    $.post('/active-edits/get-members', {slug: taggableRecord.Slug}, function(members) {
       _updateCount(Object.keys(members).length);
 
       var edits = [], anyEdits = false;
 
-      $.each(members, function(memberId, member) {
-        // todo: set to true when update-meta.json is called
-        member.makeChanges = true;
-
+      $.each(members, function(i, member) {
         var found = $.grep(edits, function(edit) {
-          if (edit.MemberSlug == memberId) {
+          if (edit.MemberSlug == member.slug) {
 
-            if (member.makeChanges) {
+            if (member.updateMeta) {
               edit.Edits = true;
             }
 
@@ -217,10 +207,10 @@ var ActiveEdits = function() {
 
         if (found.length == 0) {
           edits.push({
-            MemberSlug: memberId,
+            MemberSlug: member.slug,
             Count: 1,
-            Edits: member.makeChanges,
-            Title: member.Name
+            Edits: member.updateMeta,
+            Title: member.name
           });
         }
       });
@@ -245,79 +235,49 @@ var ActiveEdits = function() {
       if (typeof callback == 'function') {
         callback();
       }
-    };
-
-    $.getJSON('/active-edits/get-members', {slug: activeEditNode.Slug}, success);
+    }, 'json');
   };
 
   var _updateFormChanged = function() {
-
-    nodeService.updateMeta(activeEditNode, '#form-changed', "1", {
-      nonce: options.UpdateMetaNonce,
-      error: function() {
-        formChanged = false;
-      }
-    });
+    $.post('/active-edits/update-meta', {slug: taggableRecord.Slug}, function(response) {
+      if (response == 'error') formChanged = false;
+    }, 'json');
   };
 
   var _addMe = function() {
-    var node = new NodeObject();
+    _render();
 
-    node.Element = {
-      Slug: 'active-edit'
-    };
-    node.Title = 'Active Edit';
-    //node.Slug = 'active-edit';
+    _refresh(function() {
+      timers.Refresh = setInterval(function() {
+        _refresh();
+      }, options.HeartbeatFrequency * 1000);
 
-    nodeService.add(node, {
-      nonce: options.AddNonce,
-      success: function(node) {
+      DOM.activatePanelLink.fadeIn(1500);
 
-        activeEditNode = node;
+      $(window).unload(function() {
+        _removeMe();
+      });
 
-        _render();
-
-        _refresh(function() {
-
-          timers.Refresh = setInterval(function() {
-            _refresh();
-          }, options.HeartbeatFrequency * 1000);
-
-          DOM.activatePanelLink.fadeIn(1500);
-
-          $(window).unload(function() {
-            _removeMe();
-          });
-
-          $(document).bind('form_changed', function() {
-            if (!formChanged) {
-              formChanged = true;
-              _updateFormChanged();
-            }
-          });
-        });
-      },
-      params: function(params) {
-        params['RecordSlug'] = taggableRecord.Slug;
-        params['RecordElementSlug'] = taggableRecord.Element.Slug;
-      }
+      $(document).bind('form_changed', function() {
+        if (!formChanged) {
+          formChanged = true;
+          _updateFormChanged();
+        }
+      });
     });
   };
 
-  var _removeMe = function(_async) {
-
-    if (activeEditNode == null) return;
-
-    DOM.activatePanelLink.remove();
-    DOM.editListPanel.remove();
+  var _removeMe = function() {
+    if (DOM.activatePanelLink) {
+      DOM.activatePanelLink.remove();
+    }
+    if (DOM.editListPanel) {
+      DOM.editListPanel.remove();
+    }
 
     clearInterval(timers.Refresh);
 
-    nodeService.remove(activeEditNode, {
-      nonce: options.DeleteNonce,
-      async: typeof _async == 'undefined' ? false : _async
-    });
-    activeEditNode = null;
+    $.post('/active-edits/remove-member', {slug: taggableRecord.Slug}, function(response) {}, 'json');
   };
 
   return {
@@ -326,7 +286,6 @@ var ActiveEdits = function() {
     },
 
     init: function(_taggableRecord, _options) {
-
       taggableRecord = _taggableRecord;
 
       var m = dateRegEx.exec(taggableRecord.ModifiedDate);
