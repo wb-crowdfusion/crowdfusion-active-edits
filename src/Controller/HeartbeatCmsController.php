@@ -1,44 +1,24 @@
 <?php
-/**
- * No Summary
- *
- * PHP version 5
- *
- * Crowd Fusion
- * Copyright (C) 2009 Crowd Fusion, Inc.
- * http://www.crowdfusion.com/
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted under the terms of the BSD License.
- *
- * @package     CrowdFusion
- * @copyright   2009 Crowd Fusion Inc.
- * @license     http://www.opensource.org/licenses/bsd-license.php BSD License
- * @version     $Id$
- */
 
 namespace CrowdFusion\ActiveEditsPlugin\Controller;
 
 /**
- * Store list of active members per slug in cache
- *
- * @package     CrowdFusion
+ * Store list of active members per slug in cache.
  */
 class HeartbeatCmsController extends \AbstractCmsController
 {
+    /** @var \DateFactory */
     protected $DateFactory;
-    protected $PrimaryCacheStore;
-    protected $RequestContext;
 
-    protected $ttl = 1200;
+    /** @var \CacheStoreInterface */
+    protected $PrimaryCacheStore;
 
     /**
-     * @param RequestContext $RequestContext
+     * The number of seconds a cache value is stored. (default: 1 day)
+     *
+     * @var int
      */
-    public function setRequestContext(\RequestContext $RequestContext)
-    {
-        $this->RequestContext = $RequestContext;
-    }
+    protected $ttl = 86400;
 
     /**
      * @param \DateFactory $DateFactory
@@ -57,17 +37,25 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
+     * Returns list members for a given slug.
      *
+     * @return string JSON of members list
      */
     public function getMembersAction()
     {
         $members = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
 
-        echo json_encode(current($members));
+        if (count($members) === 0) {
+            $members = current($members);
+        }
+
+        echo \JSONUtils::encode($members);
     }
 
     /**
+     * Returns list total members for each slug.
      *
+     * @return string JSON of slug -> count(members)
      */
     public function totalMembersAction()
     {
@@ -77,7 +65,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             $results[$slug] = count($members);
         }
 
-        echo json_encode($results);
+        echo \JSONUtils::encode($results);
     }
 
     /**
@@ -107,11 +95,19 @@ class HeartbeatCmsController extends \AbstractCmsController
 
             // update logged-in active date
             if ($update) {
-                $user=$this->RequestContext->getUser();
-                $members[$user->ID] = array(
-                    'Name' => $user->Title,
-                    'ActiveDate' => $this->DateFactory->newStorageDate()
-                );
+
+                /** @var \Node $user */
+                $user = $this->RequestContext->getUser();
+
+                if (!isset($members[$user->ID])) {
+                    $members[$user->ID] = array(
+                        'Name'       => $user->Title,
+                        'ActiveDate' => null,
+                    );
+                }
+
+                $members[$user->ID]['ActiveDate'] = $this->DateFactory->newStorageDate();
+
                 // save
                 $this->PrimaryCacheStore->put($key, $members, $this->ttl);
             }
