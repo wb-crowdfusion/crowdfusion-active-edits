@@ -45,7 +45,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $members = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
 
-        if (count($members) === 0) {
+        if (count($members) === 1) {
             $members = current($members);
         }
 
