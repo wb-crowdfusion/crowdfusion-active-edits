@@ -83,6 +83,9 @@ class HeartbeatCmsController extends \AbstractCmsController
         if (is_string($slugs)) {
             $slugs = array($slugs);
         }
+        if (empty($slugs)) {
+            $slugs = array();
+        }
 
         foreach ($slugs as $slug) {
             $members = array();
