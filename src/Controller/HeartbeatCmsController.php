@@ -1,5 +1,5 @@
 <?php
- /**
+/**
  * No Summary
  *
  * PHP version 5
@@ -19,7 +19,7 @@
 
 namespace CrowdFusion\ActiveEditsPlugin\Controller;
 
- /**
+/**
  * Store list of active members per slug in cache
  *
  * @package     CrowdFusion
@@ -28,8 +28,17 @@ class HeartbeatCmsController extends \AbstractCmsController
 {
     protected $DateFactory;
     protected $PrimaryCacheStore;
+    protected $RequestContext;
 
     protected $ttl = 1200;
+
+    /**
+     * @param RequestContext $RequestContext
+     */
+    public function setRequestContext(\RequestContext $RequestContext)
+    {
+        $this->RequestContext = $RequestContext;
+    }
 
     /**
      * @param \DateFactory $DateFactory
@@ -52,7 +61,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function getMembersAction()
     {
-        $members = $this->loadMembersFromCache($this->Request->get('slug'), true);
+        $members = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
 
         echo json_encode(current($members));
     }
@@ -62,7 +71,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function totalMembersAction()
     {
-        $results = $this->loadMembersFromCache($this->Request->get('slugs'));
+        $results = $this->loadMembersFromCache($this->Request->getParameter('slugs'));
 
         foreach ($results as $slug => $members) {
             $results[$slug] = count($members);
@@ -98,14 +107,14 @@ class HeartbeatCmsController extends \AbstractCmsController
 
             // update logged-in active date
             if ($update) {
-                $members[$this->authUser->getID()] = array(
-                     'Name' => $this->authUser->getName(),
-                     'ActiveDate' => $this->DateFactory->newStorageDate()
+                $user=$this->RequestContext->getUser();
+                $members[$user->ID] = array(
+                    'Name' => $user->Title,
+                    'ActiveDate' => $this->DateFactory->newStorageDate()
                 );
+                // save
+                $this->PrimaryCacheStore->put($key, $members, $this->ttl);
             }
-
-            // save
-            $this->PrimaryCacheStore->put($key, $members, $this->ttl);
 
             $results[$slug] = $members;
         }
