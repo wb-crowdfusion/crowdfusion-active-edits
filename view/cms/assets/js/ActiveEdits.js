@@ -55,10 +55,12 @@ var ActiveEdits = function() {
 
     $('#app-content table.data tr:not(:first-child)').each(function() {
       var slug = $(this).attr('id');
-      if (slug.substring(0, 18) == 'collapsed_article-') {
-        slug = slug.substring(18);
+      if (slug.substring(0, 17) != 'expanded_article-') {
+        if (slug.substring(0, 18) == 'collapsed_article-') {
+          slug = slug.substring(18);
+        }
+        slugs.push(slug);
       }
-      slugs.push(slug);
     });
 
     $.post('/active-edits/total-members', {slugs: slugs}, function(json) {
