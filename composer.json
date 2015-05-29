@@ -20,5 +20,10 @@
     "psr-4": {
       "CrowdFusion\\ActiveEditsPlugin\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CrowdFusion\\Tests\\ActiveEditsPlugin\\": "tests/"
+    }
   }
 }
