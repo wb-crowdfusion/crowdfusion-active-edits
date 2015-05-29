@@ -55,9 +55,9 @@ var ActiveEdits = function() {
 
     $('#app-content table.data tr:not(:first-child)').each(function() {
       var slug = $(this).attr('id');
-      if (slug.substring(0, 17) != 'expanded_article-') {
-        if (slug.substring(0, 18) == 'collapsed_article-') {
-          slug = slug.substring(18);
+      if (slug.substring(0, 9) != 'expanded_') {
+        if (slug.substring(0, 10) == 'collapsed_') {
+          slug = slug.substring(10);
         }
         slugs.push(slug);
       }
@@ -78,7 +78,7 @@ var ActiveEdits = function() {
 
         var
           tr = $('#app-content table.data tr:[id=' + slug + ']'),
-          tr = tr.length ? tr : $('#app-content table.data tr:[id=collapsed_article-' + slug + ']'),
+          tr = tr.length ? tr : $('#app-content table.data tr:[id=collapsed_' + slug + ']'),
           td = tr.children('td:eq(' + listTitleIndex + ')'),
           span = $('span.active-edit-count', td);
 
@@ -283,6 +283,15 @@ var ActiveEdits = function() {
     $.post('/active-edits/' + taggableRecord.Slug + '/remove-member', function(response) {}, 'json');
   };
 
+  var _slugify = function(slug) {
+    return slug.toLowerCase()
+        .replace(/\s+/g, '-')      // Replace spaces with -
+        .replace(/[^\w\-]+/g, '-') // Remove all non-word chars
+        .replace(/\-\-+/g, '-')    // Replace multiple - with single -
+        .replace(/^-+/, '')        // Trim - from start of text
+        .replace(/-+$/, '');       // Trim - from end of text
+  };
+
   return {
     initList: function(_options) {
       _initList(_options);
@@ -291,12 +300,7 @@ var ActiveEdits = function() {
     init: function(_taggableRecord, _options) {
       taggableRecord = _taggableRecord;
 
-      taggableRecord.Slug = taggableRecord.Slug.toLowerCase()
-        .replace(/\s+/g, '-')      // Replace spaces with -
-        .replace(/[^\w\-]+/g, '-') // Remove all non-word chars
-        .replace(/\-\-+/g, '-')    // Replace multiple - with single -
-        .replace(/^-+/, '')        // Trim - from start of text
-        .replace(/-+$/, '');       // Trim - from end of text
+      taggableRecord.Slug = _slugify(taggableRecord.Element.Slug) + '-' + _slugify(taggableRecord.Slug);
 
       var m = dateRegEx.exec(taggableRecord.ModifiedDate);
       taggableRecord.ModifiedDate = new Date(m[1], parseInt(m[2]) - 1, m[3], m[4], m[5], m[6]);
