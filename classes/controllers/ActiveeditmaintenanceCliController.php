@@ -1,5 +1,5 @@
 <?php
- /**
+/**
  * No Summary
  *
  * PHP version 5
@@ -17,18 +17,18 @@
  * @version     $Id$
  */
 
- /**
+/**
  * Maintenance Scripts CLI for Active-Edits
  *
  * @package     CrowdFusion
  */
 class ActiveeditmaintenanceCliController extends AbstractCliController
 {
-
     /**
      * @var NodeService
      */
     protected $NodeService;
+
     public function setNodeService($NodeService)
     {
         $this->NodeService = $NodeService;

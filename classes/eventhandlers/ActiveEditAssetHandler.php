@@ -1,5 +1,5 @@
 <?php
- /**
+/**
  * No Summary
  *
  * PHP version 5
@@ -17,17 +17,13 @@
  * @version     $Id: MediaHandler.php 1141 2009-09-30 02:21:43Z ruswerner $
  */
 
- /**
+/**
  * No Summary
  *
- * @package     CrowdFusion
+ * @package CrowdFusion
  */
-
-
-
-class ActiveEditAssetHandler {
-
-
+class ActiveEditAssetHandler
+{
     /////////////////////
     // HANDLER ACTIONS //
     /////////////////////
@@ -52,5 +48,4 @@ class ActiveEditAssetHandler {
             </script>
 EOD;
     }
-
 }

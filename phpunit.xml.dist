@@ -3,7 +3,7 @@
 
     <testsuites>
         <testsuite name="CrowdFusion">
-            <directory>tests/CrowdFusion/Tests</directory>
+            <directory>tests/Controller</directory>
         </testsuite>
     </testsuites>
 

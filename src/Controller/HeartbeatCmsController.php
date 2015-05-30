@@ -74,7 +74,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
 
         if (count($results) === 1) {
-            $slug    = current(array_keys($results));
+            $slug = current(array_keys($results));
             $members = current($results);
 
             foreach ($members as $key => $member) {
@@ -102,7 +102,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
 
         if (count($results) === 1) {
-            $slug    = current(array_keys($results));
+            $slug = current(array_keys($results));
             $members = current($results);
 
             foreach ($members as $key => $member) {
@@ -123,7 +123,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      * Returns list of members for given slug(s).
      *
      * @param string|array $slugs
-     * @param boolean      $update
+     * @param boolean $update
      *
      * @return array List of active members
      */
@@ -141,8 +141,6 @@ class HeartbeatCmsController extends \AbstractCmsController
         foreach ($slugs as $slug) {
             $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '-', $slug);
 
-            $members = array();
-
             $key = sprintf('active-edits-%s', $slug);
 
             if (!$members = $this->PrimaryCacheStore->get($key)) {
@@ -151,7 +149,6 @@ class HeartbeatCmsController extends \AbstractCmsController
 
             // update logged-in active date
             if ($update) {
-
                 /** @var \Node $user */
                 $user = $this->RequestContext->getUser();
 
@@ -168,15 +165,15 @@ class HeartbeatCmsController extends \AbstractCmsController
                     $member = $members[$found];
                 } else {
                     $member = array(
-                        'slug'       => $user->Slug,
-                        'name'       => $user->Title,
+                        'slug' => $user->Slug,
+                        'name' => $user->Title,
                         'activeDate' => null,
                         'updateMeta' => false,
                     );
                 }
 
                 // set to now
-               $member['activeDate'] = $this->DateFactory->newStorageDate();
+                $member['activeDate'] = $this->DateFactory->newStorageDate();
 
                 if ($found !== false) {
                     $members[$found] = $member;

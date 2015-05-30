@@ -1,5 +1,5 @@
 <?php
- /**
+/**
  * No Summary
  *
  * PHP version 5
@@ -17,17 +17,13 @@
  * @version     $Id$
  */
 
- /**
+/**
  * No Summary
  *
- * @package     CrowdFusion
+ * @package CrowdFusion
  */
-
-
-
-class ActiveEditAddHandler {
-
-
+class ActiveEditAddHandler
+{
     protected $RequestContext;
     protected $Request;
     protected $NodeRefService;
@@ -62,8 +58,8 @@ class ActiveEditAddHandler {
     public function processActiveEditBind($action, Node &$newNode)
     {
         $user = $this->RequestContext->getUser();
-        $newNode->Title = $user->Title.' on '.$this->Request->getParameter('RecordElementSlug').':'.$this->Request->getParameter('RecordSlug');
-        $newNode->Slug = 'active-edit-'.$this->Request->getParameter('RecordSlug').'-'.(floor(microtime(true)*100));
+        $newNode->Title = $user->Title . ' on ' . $this->Request->getParameter('RecordElementSlug') . ':' . $this->Request->getParameter('RecordSlug');
+        $newNode->Slug = 'active-edit-' . $this->Request->getParameter('RecordSlug') . '-' . (floor(microtime(true) * 100));
     }
 
     /* Bound to "Node.@active-edits.add.pre" for adding member and record out tags. */
@@ -72,10 +68,9 @@ class ActiveEditAddHandler {
         $user = $this->RequestContext->getUserRef();
         $member = $this->NodeRefService->oneFromAspect('members');
 
-        $newNode->addOutTag(new Tag($member->getElement()->getSlug(),$user->getSlug(),'#active-edit-member'));
-        $newNode->addOutTag(new Tag($this->Request->getParameter('RecordElementSlug'),$this->Request->getParameter('RecordSlug'),'#active-edit-record'));
+        $newNode->addOutTag(new Tag($member->getElement()->getSlug(), $user->getSlug(), '#active-edit-member'));
+        $newNode->addOutTag(new Tag($this->Request->getParameter('RecordElementSlug'), $this->Request->getParameter('RecordSlug'), '#active-edit-record'));
 
         $nodeRef = $this->RegulatedNodeService->generateUniqueNodeRef($nodeRef);
     }
-
 }
