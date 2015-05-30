@@ -31,18 +31,99 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         return $this->getHeartbeatCmsController()->totalMembersAction();
     }
 
+    public function testTotalMembersActionSlugDoesNotExist()
+    {
+        return $this->getHeartbeatCmsController()->totalMembersAction();
+    }
+
+    public function testTotalMembersActionZeroSlug()
+    {
+        return $this->getHeartbeatCmsController()->totalMembersAction();
+    }
+
+    public function testTotalMembersActionOneSlug()
+    {
+        return $this->getHeartbeatCmsController()->totalMembersAction();
+    }
+
+    public function testTotalMembersActionTwoSlug()
+    {
+        return $this->getHeartbeatCmsController()->totalMembersAction();
+    }
+
+    public function testTotalMembersActionTwentySlug()
+    {
+        return $this->getHeartbeatCmsController()->totalMembersAction();
+    }
+
     public function testGetMembersAction()
     {
         return $this->getHeartbeatCmsController()->getMembersAction();
     }
+
+    public function testGetMembersActionSlugDoesNotExist()
+    {
+        return $this->getHeartbeatCmsController()->getMembersAction();
+    }
+
+    public function testGetMembersActionUserExist()
+    {
+        return $this->getHeartbeatCmsController()->getMembersAction();
+    }
+
+    public function testGetMembersActionUserDoesNotExist()
+    {
+        return $this->getHeartbeatCmsController()->getMembersAction();
+    }
+
 
     public function testRemoveMemberAction()
     {
         return $this->getHeartbeatCmsController()->removeMemberAction();
     }
 
+    public function testRemoveMemberActionSlugExistUserDoesExist()
+    {
+
+    }
+
+    public function testRemoveMemberActionSlugExistUserDoesNotExist()
+    {
+
+    }
+
+    public function testRemoveMemberActionSlugDoesNotExist()
+    {
+
+    }
+
     public function testUpdateMetaAction()
     {
         return $this->getHeartbeatCmsController()->updateMetaAction();
+    }
+
+    public function testUpdateMetaActionSlugDoesNotExist()
+    {
+
+    }
+
+    public function testUpdateMetaActionSlugDoesExistUserExist()
+    {
+
+    }
+
+    public function testUpdateMetaActionSlugDoesExistUserExistMetaIsTrue()
+    {
+
+    }
+
+    public function testUpdateMetaActionSlugDoesExistUserExistMetaIsFalse()
+    {
+
+    }
+
+    public function testUpdateMetaActionSlugDoesExistUserDoesNotExist()
+    {
+
     }
 }
