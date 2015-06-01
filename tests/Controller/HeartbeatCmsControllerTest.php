@@ -136,9 +136,21 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testTotalMembersAction()
     {
+        $members = array(
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title,
+                'activeDate' => null,
+                'updateMeta' => false,
+            )
+        );
+
         $slugs = array();
         foreach ($this->getSlugs() as $slug) {
-            $slugs[$slug[0]] = array();
+            $slugs[$slug[0]] = $members;
+
+            // store in cache
+            $this->cache->put(sprintf('active-edits-%s', $slug[0]), $members, $this->controller->getTtl());
         }
         $this->request->addRouteParameters(array('slugs' => array_keys($slugs)));
 

@@ -21,6 +21,14 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $ttl = 86400;
 
     /**
+     * @param int
+     */
+    public function getTtl()
+    {
+        return $this->ttl;
+    }
+
+    /**
      * @param \DateFactory $DateFactory
      */
     public function setDateFactory(\DateFactory $DateFactory)
@@ -182,7 +190,7 @@ class HeartbeatCmsController extends \AbstractCmsController
                 }
 
                 // update
-                $this->PrimaryCacheStore->put($key, $members, $this->ttl);
+                $this->PrimaryCacheStore->put($key, $members, $this->getTtl());
             }
 
             $results[$slug] = array_values($members);
