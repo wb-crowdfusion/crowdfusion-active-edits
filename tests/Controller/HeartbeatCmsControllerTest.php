@@ -149,8 +149,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         foreach ($this->getSlugs() as $slug) {
             $slugs[$slug[0]] = $members;
 
-            // store in cache
-            $this->cache->put(sprintf('active-edits-%s', $slug[0]), $members, $this->controller->getTtl());
+            $this->addSlugToCache($slug[0], $members);
+
         }
         $this->request->addRouteParameters(array('slugs' => array_keys($slugs)));
 
@@ -163,33 +163,150 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString($output, json_encode($slugs));
     }
 
+    public function testTotalMembersActionWithNonBadSlug()
+    {
+        $this->request->addRouteParameters(array('slugs' => array($slug = $this->uuidV4())));
+
+        ob_start();
+        $this->controller->totalMembersAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertJsonStringEqualsJsonString($output, json_encode(array($slug => array())));
+    }
+
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testUpdateMetaAction($slug)
+    {
+        $this->addSlugToCache($slug, array(
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title,
+                'activeDate' => null,
+                'updateMeta' => false,
+            )
+        ));
+
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->updateMetaAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertEquals($output, 'success');
+    }
+
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testUpdateMetaActionWithNonBadSlug($slug)
+    {
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->updateMetaAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertEquals($output, 'error');
+    }
+
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testRemoveMemberAction($slug)
+    {
+        $this->addSlugToCache($slug, array(
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title,
+                'activeDate' => null,
+                'updateMeta' => false,
+            )
+        ));
+
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->removeMemberAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertEquals($output, 'success');
+    }
+
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testRemoveMemberActionWithNonBadSlug($slug)
+    {
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->removeMemberAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertEquals($output, 'success');
+    }
+
+    /**
+     * Returns a list of slugs.
+     */
     public function getSlugs()
     {
         $slugs = array();
 
         for ($i=0; $i<10; $i++) {
-            $slugs[] = array(sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-
-        		// 32 bits for "time_low"
-        		mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-
-        		// 16 bits for "time_mid"
-        		mt_rand(0, 0xffff),
-
-        		// 16 bits for "time_hi_and_version",
-        		// four most significant bits holds version number 4
-        		mt_rand(0, 0x0fff) | 0x4000,
-
-        		// 16 bits, 8 bits for "clk_seq_hi_res",
-        		// 8 bits for "clk_seq_low",
-        		// two most significant bits holds zero and one for variant DCE1.1
-        		mt_rand(0, 0x3fff) | 0x8000,
-
-        		// 48 bits for "node"
-        		mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    		));
+            $slugs[] = array($this->uuidV4());
         }
 
         return $slugs;
+    }
+
+    /**
+     * Generates a UUID v4.
+     */
+    private function uuidV4()
+    {
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+
+    		// 32 bits for "time_low"
+    		mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+
+    		// 16 bits for "time_mid"
+    		mt_rand(0, 0xffff),
+
+    		// 16 bits for "time_hi_and_version",
+    		// four most significant bits holds version number 4
+    		mt_rand(0, 0x0fff) | 0x4000,
+
+    		// 16 bits, 8 bits for "clk_seq_hi_res",
+    		// 8 bits for "clk_seq_low",
+    		// two most significant bits holds zero and one for variant DCE1.1
+    		mt_rand(0, 0x3fff) | 0x8000,
+
+    		// 48 bits for "node"
+    		mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+		);
+    }
+
+    /**
+     * Stores the slug with members to cache.
+     *
+     * @param string $slug
+     * @param array  $members
+     */
+    private function addSlugToCache($slug, array $members = array())
+    {
+        $this->cache->put(sprintf('active-edits-%s', $slug), $members, $this->controller->getTtl());
     }
 }
