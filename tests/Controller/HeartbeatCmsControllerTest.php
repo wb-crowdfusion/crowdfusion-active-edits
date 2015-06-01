@@ -7,79 +7,131 @@ use CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController;
 class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 {
     /** @var HeartbeatCmsController */
-    protected $heartbeatCmsController;
+    protected $controller;
 
-    /**
-     * @return HeartbeatCmsController
-     */
-    protected function getHeartbeatCmsController()
+    protected function setUp()
     {
-        if (null === $this->heartbeatCmsController) {
-            $this->heartbeatCmsController = new HeartbeatCmsController();
-        }
-        return $this->heartbeatCmsController;
+        $Logger             = $this->getMock('LoggerInterface');
+
+        $Request = $this
+            ->getMockBuilder('Request')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
+
+        $RequestContext     = $this->getMock('RequestContext');
+        $TransactionManager = $this->getMock('TransactionManagerInterface');
+
+        $Nonces = $this
+            ->getMockBuilder('Nonces')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
+
+        $Permissions        = $this->getMock('Permissions');
+        $DateFactory = $this
+            ->getMockBuilder('DateFactory')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
+
+        $ModelMapper        = $this->getMock('ModelMapper');
+
+        $Session = $this
+            ->getMockBuilder('Session')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
+
+        $Response = $this
+            ->getMockBuilder('Response')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
+
+        $isCommandLine      = false;
+
+        $this->controller = new HeartbeatCmsController(
+            $Logger,
+            $Request,
+            $RequestContext,
+            $TransactionManager,
+            $Nonces,
+            $Permissions,
+            $DateFactory,
+            $ModelMapper,
+            $Session,
+            $Response,
+            $isCommandLine
+        );
     }
 
-    public function testGetController()
+    protected function tearDown()
     {
-        $controller = $this->getHeartbeatCmsController();
-        $this->assertInstanceOf('HeartbeatCmsController', $controller);
+        unset($this->controller);
     }
 
+    public function testCreateController()
+    {
+        $this->assertInstanceOf('\AbstractCmsController', $this->controller);
+    }
+
+/*
     public function testTotalMembersAction()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        $results = $this->controller->totalMembersAction();
+
+        $this->assertNull($results);
     }
 
     public function testTotalMembersActionSlugDoesNotExist()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        return $this->controller->totalMembersAction();
     }
 
     public function testTotalMembersActionZeroSlug()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        return $this->controller->totalMembersAction();
     }
 
     public function testTotalMembersActionOneSlug()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        return $this->controller->totalMembersAction();
     }
 
     public function testTotalMembersActionTwoSlug()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        return $this->controller->totalMembersAction();
     }
 
     public function testTotalMembersActionTwentySlug()
     {
-        return $this->getHeartbeatCmsController()->totalMembersAction();
+        return $this->controller->totalMembersAction();
     }
 
     public function testGetMembersAction()
     {
-        return $this->getHeartbeatCmsController()->getMembersAction();
+        return $this->controller->getMembersAction();
     }
 
     public function testGetMembersActionSlugDoesNotExist()
     {
-        return $this->getHeartbeatCmsController()->getMembersAction();
+        return $this->controller->getMembersAction();
     }
 
     public function testGetMembersActionUserExist()
     {
-        return $this->getHeartbeatCmsController()->getMembersAction();
+        return $this->controller->getMembersAction();
     }
 
     public function testGetMembersActionUserDoesNotExist()
     {
-        return $this->getHeartbeatCmsController()->getMembersAction();
+        return $this->controller->getMembersAction();
     }
-
 
     public function testRemoveMemberAction()
     {
-        return $this->getHeartbeatCmsController()->removeMemberAction();
+        return $this->controller->removeMemberAction();
     }
 
     public function testRemoveMemberActionSlugExistUserDoesExist()
@@ -99,7 +151,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testUpdateMetaAction()
     {
-        return $this->getHeartbeatCmsController()->updateMetaAction();
+        return $this->controller->updateMetaAction();
     }
 
     public function testUpdateMetaActionSlugDoesNotExist()
@@ -126,4 +178,5 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     {
 
     }
+*/
 }
