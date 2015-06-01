@@ -134,12 +134,13 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         ))));
     }
 
-    /**
-     * @dataProvider getSlugs
-     */
-    public function testTotalMembersAction($slug)
+    public function testTotalMembersAction()
     {
-        $this->request->addRouteParameters(array('slugs' => $slug));
+        $slugs = array();
+        foreach ($this->getSlugs() as $slug) {
+            $slugs[$slug[0]] = array();
+        }
+        $this->request->addRouteParameters(array('slugs' => array_keys($slugs)));
 
         ob_start();
         $this->controller->totalMembersAction();
@@ -147,12 +148,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         $output = ob_get_contents();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array(
-            $slug => array(array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-            ))
-        )));
+        $this->assertJsonStringEqualsJsonString($output, json_encode($slugs));
     }
 
     public function getSlugs()
