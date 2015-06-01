@@ -2,6 +2,7 @@
 
 namespace CrowdFusion\Tests\ActiveEditsPlugin\Controller;
 
+use CrowdFusion\Tests\Caching\Stores\Mock\MemcachedMock;
 use CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController;
 
 class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
@@ -49,8 +50,6 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             ->getMock()
         ;
 
-        $isCommandLine      = false;
-
         $this->controller = new HeartbeatCmsController(
             $Logger,
             $Request,
@@ -62,8 +61,26 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             $ModelMapper,
             $Session,
             $Response,
-            $isCommandLine
+            false
         );
+
+        if (!class_exists('Memcached')) {
+            MemcachedMock::create();
+        }
+
+        $MemcachedCacheStore = new \MemcachedCacheStore(
+            new \NullLogger(),
+            [['host' => '127.0.0.1', 'port' => 11211]],
+            sprintf('test_%s_', md5(rand())),
+            true,
+            'cf_memcached_tests',
+            false,
+            false,
+            false,
+            false
+        );
+
+        $this->controller->setPrimaryCacheStore($MemcachedCacheStore);
     }
 
     protected function tearDown()
