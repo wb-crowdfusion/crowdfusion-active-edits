@@ -134,6 +134,79 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         ))));
     }
 
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testGetMembersActionSlugInCache($slug)
+    {
+        $this->addSlugToCache($slug, array(
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title." from cache",
+                'activeDate' => null,
+                'updateMeta' => false,
+            )
+        ));
+
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->getMembersAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
+            'slug'       => $this->user->Slug,
+            'name'       => $this->user->Title." from cache",
+            'activeDate' => null,
+            'updateMeta' => false
+        ))));
+    }
+
+    /**
+     * @dataProvider getSlugs
+     */
+    public function testGetMembersActionMultiple($slug)
+    {
+        $this->addSlugToCache($slug, array(
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title."1",
+                'activeDate' => null,
+                'updateMeta' => false,
+            ),
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title."2",
+                'activeDate' => null,
+                'updateMeta' => false,
+            )
+        ));
+
+        $this->request->addRouteParameters(array('slug' => $slug));
+
+        ob_start();
+        $this->controller->getMembersAction();
+        ob_end_flush();
+
+        $output = ob_get_contents();
+
+        $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
+            'slug'       => $this->user->Slug,
+            'name'       => $this->user->Title."1",
+            'activeDate' => null,
+            'updateMeta' => false
+        ),
+            array(
+                'slug'       => $this->user->Slug,
+                'name'       => $this->user->Title."2",
+                'activeDate' => null,
+                'updateMeta' => false
+            )
+        )));
+    }
+
     public function testTotalMembersAction()
     {
         $members = array(
@@ -255,7 +328,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         $output = ob_get_contents();
 
-        $this->assertEquals($output, 'success');
+        $this->assertEquals($output, 'error');
     }
 
     /**
