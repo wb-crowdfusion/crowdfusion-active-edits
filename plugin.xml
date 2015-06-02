@@ -27,20 +27,4 @@ $properties['active.edit.max'] = 50;
     ]]>
   </config>
 
-  <elements>
-    <element slug="active-edit">
-      <info>
-        <name>Active Edit</name>
-        <description/>
-        <default_order>ActiveDate DESC</default_order>
-        <allow_slug_slashes>true</allow_slug_slashes>
-        <base_url>active-edit/</base_url>
-      </info>
-      <aspects>
-        <aspect slug="active-edits"/>
-      </aspects>
-    </element>
-
-  </elements>
-
 </plugin>
