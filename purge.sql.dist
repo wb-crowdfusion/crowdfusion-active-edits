@@ -53,6 +53,8 @@ DROP TABLE n_active_edit_outtags;
 -- ONLY if the element id also matches, this is a safeguard to ensure no other tag roles might also be using
 -- `active-edit-record`.
 
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS procPurgeAllTables $$
 CREATE PROCEDURE procPurgeAllTables(elementID INT, Role VARCHAR(255))
 BEGIN
@@ -81,10 +83,29 @@ BEGIN
       LEAVE purgeTable;
     END IF;
 
-    #SET @s = CONCAT('DELETE FROM ', tableName, ' WHERE ElementID = ', elementID, ' AND Role = "', Role, '"');
-    SET @s = CONCAT('SELECT "', tableName, '", COUNT(1) AS count FROM ' , tableName);
+    SET @minId = 0;
+    SET @maxId = 0;
+
+    SET @s = CONCAT('SELECT MIN(TagID) INTO @minId FROM ', tableName);
     PREPARE stmt FROM @s;
     EXECUTE stmt;
+
+    SET @s = CONCAT('SELECT MAX(TagID) INTO @maxId FROM ', tableName);
+    PREPARE stmt FROM @s;
+    EXECUTE stmt;
+
+    WHILE @minId <= @maxId DO
+
+      #SET @s = CONCAT('DELETE FROM ', tableName, ' WHERE ElementID = ', elementID, ' AND Role = "', Role, '" AND TagID >= ', @minId, ' AND TagID <= ', (@minId + 10)');
+      SET @s = CONCAT('SELECT "', tableName, '", COUNT(1) AS count FROM ' , tableName, ' WHERE TagID >= ', @minId, ' AND TagID <= ', (@minId + 10));
+      PREPARE stmt FROM @s;
+      EXECUTE stmt;
+
+      SET @minId = @minId + 10;
+
+      SELECT SLEEP(2);
+
+    END WHILE;
 
   END LOOP;
 
