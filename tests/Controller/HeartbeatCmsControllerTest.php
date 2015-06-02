@@ -16,6 +16,9 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     /** @var \Request */
     protected $request;
 
+    /** @var \RequestContext */
+    protected $requestContext;
+
     /** @var \stdClass */
     protected $user;
 
@@ -28,15 +31,14 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             ->setConstructorArgs(array('/tmp', 'utf-8'))
             ->getMock()
         ;
-        $Request       = new \Request($InputClean, '/');
-        $this->request = $Request;
+        $this->request = new \Request($InputClean, '/');
 
         $this->user        = new \stdClass();
         $this->user->Slug  = 'jonnytest';
         $this->user->Title = 'Jonny Test';
 
-        $RequestContext = new \RequestContext();
-        $RequestContext->setUser($this->user);
+        $this->requestContext = new \RequestContext();
+        $this->requestContext->setUser($this->user);
 
         $TransactionManager = $this->getMock('TransactionManagerInterface');
 
@@ -69,8 +71,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         $this->controller = new HeartbeatCmsController(
             $Logger,
-            $Request,
-            $RequestContext,
+            $this->request,
+            $this->requestContext,
             $TransactionManager,
             $Nonces,
             $Permissions,
@@ -142,7 +144,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->addSlugToCache($slug, array(
             array(
                 'slug'       => $this->user->Slug,
-                'name'       => $this->user->Title." from cache",
+                'name'       => $this->user->Title,
                 'activeDate' => null,
                 'updateMeta' => false,
             )
@@ -158,7 +160,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
             'slug'       => $this->user->Slug,
-            'name'       => $this->user->Title." from cache",
+            'name'       => $this->user->Title,
             'activeDate' => null,
             'updateMeta' => false
         ))));
@@ -167,22 +169,23 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getSlugs
      */
-    public function testGetMembersActionMultiple($slug)
+    public function testGetMembersActionWithMultiUsers($slug)
     {
         $this->addSlugToCache($slug, array(
             array(
                 'slug'       => $this->user->Slug,
-                'name'       => $this->user->Title."1",
-                'activeDate' => null,
-                'updateMeta' => false,
-            ),
-            array(
-                'slug'       => $this->user->Slug,
-                'name'       => $this->user->Title."2",
+                'name'       => $this->user->Title,
                 'activeDate' => null,
                 'updateMeta' => false,
             )
         ));
+
+        // set new user
+        $user        = new \stdClass();
+        $user->Slug  = 'bobdoll';
+        $user->Title = 'Bob Doll';
+        // update logged-in user
+        $this->requestContext->setUser($user);
 
         $this->request->addRouteParameters(array('slug' => $slug));
 
@@ -192,15 +195,16 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         $output = ob_get_contents();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
-            'slug'       => $this->user->Slug,
-            'name'       => $this->user->Title."1",
-            'activeDate' => null,
-            'updateMeta' => false
-        ),
+        $this->assertJsonStringEqualsJsonString($output, json_encode(array(
             array(
                 'slug'       => $this->user->Slug,
-                'name'       => $this->user->Title."2",
+                'name'       => $this->user->Title,
+                'activeDate' => null,
+                'updateMeta' => false
+            ),
+            array(
+                'slug'       => $user->Slug,
+                'name'       => $user->Title,
                 'activeDate' => null,
                 'updateMeta' => false
             )

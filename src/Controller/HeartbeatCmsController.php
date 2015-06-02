@@ -88,7 +88,9 @@ class HeartbeatCmsController extends \AbstractCmsController
             foreach ($members as $key => $member) {
                 if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
                     unset($members[$key]);
+
                     $isDeleted = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+
                     break;
                 }
             }
