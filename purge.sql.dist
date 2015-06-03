@@ -97,7 +97,7 @@ BEGIN
     WHILE @minId <= @maxId DO
 
       #SET @s = CONCAT('DELETE FROM ', tableName, ' WHERE ElementID = ', elementID, ' AND Role = "', Role, '" AND TagID >= ', @minId, ' AND TagID <= ', (@minId + 10)');
-      SET @s = CONCAT('SELECT "', tableName, '", COUNT(1) AS count FROM ' , tableName, ' WHERE TagID >= ', @minId, ' AND TagID <= ', (@minId + 10));
+      SET @s = CONCAT('SELECT "', tableName, '" AS tableName, ', @minId, ' AS minId, ', @maxId, ' AS maxId FROM ' , tableName, ' WHERE TagID >= ', @minId, ' AND TagID <= ', (@minId + 10));
       PREPARE stmt FROM @s;
       EXECUTE stmt;
 
