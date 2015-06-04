@@ -7,8 +7,10 @@ class AssetHandler
     /**
      * Bound to "cms-head" to include the JavaScript files and CSS needed to enable
      * the client-side functionality.
+     *
+     * @param \Transport $output
      */
-    public function generateAsset(Transport $output)
+    public function generateAsset(\Transport $output)
     {
         $output->String .= <<<EOD
             {% asset js?src=/js/ActiveEdits.js&pack=true %}
