@@ -21,7 +21,7 @@ BEGIN
             ON (t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA)
         WHERE t.TABLE_SCHEMA = DATABASE()
             AND t.TABLE_TYPE = 'BASE TABLE'
-            AND (c.COLUMN_NAME = 'ElementId' OR c.COLUMN_NAME = 'Role' OR c.COLUMN_NAME = 'TagId')
+            AND (c.COLUMN_NAME = 'ElementID' OR c.COLUMN_NAME = 'Role' OR c.COLUMN_NAME = 'TagID')
         GROUP BY t.TABLE_NAME
         HAVING COUNT(1) = 3
         ORDER BY t.TABLE_NAME ASC;
@@ -55,7 +55,7 @@ BEGIN
 
         WHILE @min_id <= @max_id DO
 
-            SET @s = CONCAT('DELETE FROM ', current_table, ' WHERE element_id = ', element_id, ' AND Role = "', role_name, '" AND TagID >= ', @min_id, ' AND TagID <= ', (@min_id + @batch_count));
+            SET @s = CONCAT('DELETE FROM ', current_table, ' WHERE ElementID = ', element_id, ' AND Role = "', role_name, '" AND TagID >= ', @min_id, ' AND TagID <= ', (@min_id + @batch_count));
             PREPARE stmt FROM @s;
             EXECUTE stmt;
 
