@@ -7,7 +7,9 @@
     <!--import>shared-context.xml</import-->
 
     <objects>
-      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController" />
+      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController" />
+      <object id="ActiveEditAssetHandler" class="CrowdFusion\Plugin\ActiveEditsPlugin\EventHandler\AssetHandler" />
+      <object id="Activeeditconfig" class="CrowdFusion\Plugin\ActiveEditsPlugin\Filter\ConfigFilterer" />
     </objects>
 
     <events>

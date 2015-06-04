@@ -1,6 +1,8 @@
 <?php
 
-class ActiveeditconfigFilterer extends AbstractFilterer
+namespace CrowdFusion\Plugin\ActiveEditsPlugin\Filter;
+
+class ConfigFilterer extends \AbstractFilterer
 {
     protected $heartbeatFrequency;
     protected $listCheckFrequency;
@@ -29,7 +31,7 @@ class ActiveeditconfigFilterer extends AbstractFilterer
 
     protected function getDefaultMethod()
     {
-        return "config";
+        return 'config';
     }
 
     /**
