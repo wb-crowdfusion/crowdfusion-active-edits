@@ -1,9 +1,9 @@
 <?php
 
-namespace CrowdFusion\Tests\ActiveEditsPlugin\Controller;
+namespace CrowdFusion\Tests\Plugin\ActiveEditsPlugin\Controller;
 
 use CrowdFusion\Tests\Caching\Stores\Mock\MemcachedMock;
-use CrowdFusion\ActiveEditsPlugin\Controller\HeartbeatCmsController;
+use CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController;
 
 class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 {

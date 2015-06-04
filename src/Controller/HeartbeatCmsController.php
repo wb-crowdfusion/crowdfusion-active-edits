@@ -1,6 +1,6 @@
 <?php
 
-namespace CrowdFusion\ActiveEditsPlugin\Controller;
+namespace CrowdFusion\Plugin\ActiveEditsPlugin\Controller;
 
 /**
  * Store list of active members per slug in cache.
