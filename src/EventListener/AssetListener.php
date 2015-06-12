@@ -1,8 +1,8 @@
 <?php
 
-namespace CrowdFusion\Plugin\ActiveEditsPlugin\EventHandler;
+namespace CrowdFusion\Plugin\ActiveEditsPlugin\EventListener;
 
-class AssetHandler
+class AssetListener
 {
     /**
      * Bound to "cms-head" to include the JavaScript files and CSS needed to enable
