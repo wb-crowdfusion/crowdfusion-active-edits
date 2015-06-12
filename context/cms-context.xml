@@ -4,15 +4,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.crowdfusion.com/schema/context http://www.crowdfusion.com/schema/crowdfusion-context-2.0.xsd">
 
-    <!--import>shared-context.xml</import-->
+  <objects>
+    <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController" />
+    <object id="ActiveEditAssetListener" class="CrowdFusion\Plugin\ActiveEditsPlugin\EventListener\AssetListener" />
+    <object id="ActiveeditconfigFilterer" class="CrowdFusion\Plugin\ActiveEditsPlugin\Filter\ConfigFilterer" />
+  </objects>
 
-    <objects>
-      <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController" />
-      <object id="ActiveEditAssetListener" class="CrowdFusion\Plugin\ActiveEditsPlugin\EventListener\AssetListener" />
-      <object id="ActiveeditconfigFilterer" class="CrowdFusion\Plugin\ActiveEditsPlugin\Filter\ConfigFilterer" />
-    </objects>
-
-    <events>
-        <bind name="cms-head" ref="ActiveEditAssetListener" method="generateAsset" priority="1"/>
-    </events>
+  <events>
+    <bind name="cms-head" ref="ActiveEditAssetListener" method="generateAsset" priority="1"/>
+  </events>
 </context>

@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <xmodule
-        xmlns="http://www.crowdfusion.com/schema/xmod"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.crowdfusion.com/schema/xmod http://www.crowdfusion.com/schema/crowdfusion-xmod-2.0.xsd">
+    xmlns="http://www.crowdfusion.com/schema/xmod"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.crowdfusion.com/schema/xmod http://www.crowdfusion.com/schema/crowdfusion-xmod-2.0.xsd">
 
-    <info xbuilder="EditCmsBuilder"/>
+  <info xbuilder="EditCmsBuilder"/>
 
-    <template src="init-active-edits.cft"/>
+  <template src="init-active-edits.cft"/>
 
 </xmodule>
