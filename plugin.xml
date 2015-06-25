@@ -1,8 +1,8 @@
 <?xml version='1.0'?>
 <plugin
-  xmlns="http://www.crowdfusion.com/schema/plugin"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.crowdfusion.com/schema/plugin http://www.crowdfusion.com/schema/crowdfusion-plugin-2.0.xsd">
+    xmlns="http://www.crowdfusion.com/schema/plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.crowdfusion.com/schema/plugin http://www.crowdfusion.com/schema/crowdfusion-plugin-2.0.xsd">
 
   <info>
     <title>Crowd Fusion - Active Edits</title>
@@ -10,20 +10,14 @@
     <description>Provides functionality for tracking concurrent active edits to records. TEST</description>
     <priority>10</priority>
     <version>2.0.0-dev</version>
-    <license>Crowd Fusion Enterprise Plugin</license>
-    <dependencies></dependencies>
-    <cfversions>2.1.x</cfversions>
-    <homepage>http://crowdfusion.com/</homepage>
   </info>
 
   <config>
     <![CDATA[
-
 $properties['active.edit.heartbeat.frequency'] = 60;
 $properties['active.edit.list.check.frequency'] = 30;
 $properties['active.edit.stale.threshold'] = 45;
 $properties['active.edit.max'] = 50;
-
     ]]>
   </config>
 

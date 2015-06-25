@@ -21,7 +21,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $ttl = 86400;
 
     /**
-     * @param int
+     * @return int
      */
     public function getTtl()
     {
