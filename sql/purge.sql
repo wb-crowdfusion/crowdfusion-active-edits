@@ -12,7 +12,7 @@
 -- STEP 6: Run this script.
 --
 -- This is for sites upgrading from 1.x branch to 2.x which moves storage for
--- `active-edits` data from mysql to memcahce.
+-- `active-edits` data from mysql to memcached.
 --
 
 drop table n_active_edit;
