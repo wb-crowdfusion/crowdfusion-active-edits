@@ -89,7 +89,7 @@ class HeartbeatCmsController extends \AbstractCmsController
                 if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
                     unset($members[$key]);
 
-                    $isDeleted = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+                    $isDeleted = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->getTtl());
 
                     break;
                 }
@@ -118,7 +118,7 @@ class HeartbeatCmsController extends \AbstractCmsController
                 if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
                     $members[$key]['updateMeta'] = true;
 
-                    $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->ttl);
+                    $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->getTtl());
 
                     break;
                 }
