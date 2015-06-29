@@ -99,15 +99,13 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         $members = $this->loadMembersFromCache($slug);
 
-        if (count($members) === 1) {
-            foreach ($members as $index => $member) {
-                if ($member['slug'] == $this->getUser()->Slug) {
-                    unset($members[$index]);
+        foreach ($members as $index => $member) {
+            if ($member['slug'] == $this->getUser()->Slug) {
+                unset($members[$index]);
 
-                    $isDeleted = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
+                $isDeleted = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
-                    break;
-                }
+                break;
             }
         }
 
@@ -129,15 +127,13 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         $members = $this->loadMembersFromCache($slug);
 
-        if (count($members) === 1) {
-            foreach ($members as $index => $member) {
-                if ($member['slug'] == $this->getUser()->Slug) {
-                    $members[$index]['updateMeta'] = true;
+        foreach ($members as $index => $member) {
+            if ($member['slug'] == $this->getUser()->Slug) {
+                $members[$index]['updateMeta'] = true;
 
-                    $isUpdated = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
+                $isUpdated = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
-                    break;
-                }
+                break;
             }
         }
 
