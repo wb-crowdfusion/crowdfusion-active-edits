@@ -223,9 +223,11 @@ class HeartbeatCmsController extends \AbstractCmsController
         $i = 0;
         do {
             if ($lock = $this->PrimaryCacheStore->get($this->getLockKey($slug))) {
-                usleep($i += 200000); // 200 milliseconds
+                usleep(200000); // 200 milliseconds
+
+                $i += 0.2;
             }
-        } while ($lock && $i < 180000000); // 3 minutes
+        } while ($lock && $i < 5); // 5 seconds
 
         // failed after 3 seconds
         if ($lock) {
