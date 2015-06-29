@@ -83,7 +83,7 @@ var ActiveEdits = function() {
           span = $('span.active-edit-count', td);
 
         if (span.length == 0) {
-          span = $('<span class="active-edit-count" style="display:none">' + 1 + '</span>');
+          span = $('<span class="active-edit-count" style="display:none">' + members.length + '</span>');
           td.prepend(span);
           span.fadeIn(2000);
         } else {
