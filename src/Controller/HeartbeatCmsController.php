@@ -151,28 +151,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function loadMembersFromCache($slug)
     {
-        $cacheKey = $this->generateKey($slug);
-
-        if ($members = $this->PrimaryCacheStore->get($cacheKey)) {
-            $foundExpiredMembers = false;
-
-            foreach ($members as $index => $member) {
-
-                // ActiveDate - TTL (seconds)
-                $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->add(
-                    new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
-                );
-
-                if ($date < $this->DateFactory->newStorageDate()) {
-                    $foundExpiredMembers = true;
-                    unset($members[$index]);
-                }
-            }
-
-            if ($foundExpiredMembers) {
-                $this->PrimaryCacheStore->put($cacheKey, $members, $this->getTtl());
-            }
-        } else {
+        if (!$members = $this->PrimaryCacheStore->get($this->generateKey($slug))) {
             $members = array();
         }
 
@@ -189,15 +168,21 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function updateMembersToCache($slug, array $members = array())
     {
-        $cacheKey = $this->generateKey($slug);
-
         // update logged-in active date
         $found = false;
 
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 $found = $index;
-                break;
+                continue;
+            }
+
+            // ActiveDate + TTL (seconds)
+            $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->add(
+                new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
+            );
+            if ($date < $this->DateFactory->newStorageDate()) {
+                unset($members[$index]);
             }
         }
 
@@ -222,7 +207,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         // update
-        $this->PrimaryCacheStore->put($cacheKey, $members, $this->getTtl());
+        $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
         return array_values($members);
     }
