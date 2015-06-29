@@ -100,9 +100,9 @@ class HeartbeatCmsController extends \AbstractCmsController
         $members = $this->loadMembersFromCache($slug);
 
         if (count($members) === 1) {
-            foreach ($members as $key => $member) {
+            foreach ($members as $index => $member) {
                 if ($member['slug'] == $this->getUser()->Slug) {
-                    unset($members[$key]);
+                    unset($members[$index]);
 
                     $isDeleted = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
@@ -130,9 +130,9 @@ class HeartbeatCmsController extends \AbstractCmsController
         $members = $this->loadMembersFromCache($slug);
 
         if (count($members) === 1) {
-            foreach ($members as $key => $member) {
+            foreach ($members as $index => $member) {
                 if ($member['slug'] == $this->getUser()->Slug) {
-                    $members[$key]['updateMeta'] = true;
+                    $members[$index]['updateMeta'] = true;
 
                     $isUpdated = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
@@ -155,9 +155,9 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function loadMembersFromCache($slug)
     {
-        $key = $this->generateKey($slug);
+        $cacheKey = $this->generateKey($slug);
 
-        if (!$members = $this->PrimaryCacheStore->get($key)) {
+        if (!$members = $this->PrimaryCacheStore->get($cacheKey)) {
             $members = array();
         }
 
@@ -174,14 +174,14 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function updateMembersToCache($slug, array $members = array())
     {
-        $key = $this->generateKey($slug);
+        $cacheKey = $this->generateKey($slug);
 
         // update logged-in active date
         $found = false;
 
-        foreach ($members as $key => $member) {
+        foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
-                $found = $key;
+                $found = $index;
                 break;
             }
         }
@@ -207,7 +207,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         // update
-        $this->PrimaryCacheStore->put($key, $members, $this->getTtl());
+        $this->PrimaryCacheStore->put($cacheKey, $members, $this->getTtl());
 
         return array_values($members);
     }
