@@ -59,9 +59,15 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function totalMembersAction()
     {
-        $members = $this->loadMembersFromCache($slug = $this->Request->getParameter('slugs'));
+        $members = array();
 
-        echo \JSONUtils::encode(array($slug => $members));
+        $slugs = $this->Request->getParameter('slugs');
+
+        foreach ($slugs as $slug) {
+            $members[$slug] = $this->loadMembersFromCache($slug);
+        }
+
+        echo \JSONUtils::encode($members);
     }
 
     /**
