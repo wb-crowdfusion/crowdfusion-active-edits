@@ -71,13 +71,13 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function getMembersAction()
     {
-        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+        $this->getLock($slug = $this->Request->getParameter('slug'));
 
         $results = $this->loadMembersFromCache($slug, true);
 
         $members = count($results) === 1 ? current($results) : array();
 
-        $this->endTransaction($slug);
+        $this->releaseLock($slug);
 
         echo \JSONUtils::encode($members);
     }
@@ -91,7 +91,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $isDeleted = false;
 
-        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+        $this->getLock($slug = $this->Request->getParameter('slug'));
 
         $results = $this->loadMembersFromCache($slug);
 
@@ -110,7 +110,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             }
         }
 
-        $this->endTransaction($slug);
+        $this->releaseLock($slug);
 
         echo $isDeleted ? 'success' : 'error';
     }
@@ -124,7 +124,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $isUpdated = false;
 
-        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+        $this->getLock($slug = $this->Request->getParameter('slug'));
 
         $results = $this->loadMembersFromCache($slug);
 
@@ -143,7 +143,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             }
         }
 
-        $this->endTransaction($slug);
+        $this->releaseLock($slug);
 
         echo $isUpdated ? 'success' : 'error';
     }
@@ -216,56 +216,52 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Starts a transaction.
+     * create lock.
      *
      * @param string $slug
      */
-    protected function startTransaction($slug)
+    protected function getLock($slug)
     {
         // loop until key is released
-        while ($this->getTransaction($slug)) {
-            sleep(2);
+        $i = 0;
+        do {
+            if ($lock = $this->PrimaryCacheStore->get($this->getLockKey($slug))) {
+                usleep($i += 200000); // 200 milliseconds
+            }
+        } while ($lock && $i < 3000)
+
+        // failed after 3 seconds
+        if ($lock) {
+            throw new \Exception(sprintf('Failed to process data with slug "%s".', $slug));
         }
 
-        $this->PrimaryCacheStore->put($this->getTransactionKey($slug), $this->getUser()->Slug, $this->getTtl());
+        $this->PrimaryCacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
     }
 
     /**
-     * Ends a transaction.
+     * Releases lock.
      *
      * @param string $slug
      */
-    protected function endTransaction($slug)
+    protected function releaseLock($slug)
     {
-        $this->PrimaryCacheStore->delete($this->getTransactionKey($slug));
+        $this->PrimaryCacheStore->delete($this->getLockKey($slug));
     }
 
     /**
-     * Returns the transaction value.
+     * Generates lock key.
      *
      * @param string $slug
      *
      * @return string
      */
-    protected function getTransaction($slug)
-    {
-        return $this->PrimaryCacheStore->get($this->getTransactionKey($slug));
-    }
-
-    /**
-     * Generates a transaction Memcache key.
-     *
-     * @param string $slug
-     *
-     * @return string
-     */
-    protected function getTransactionKey($slug)
+    protected function getLockKey($slug)
     {
         return $this->generateKey($slug, 'active-edits-transaction');
     }
 
     /**
-     * Generates a Memcache key.
+     * Generates key.
      *
      * @param string $slug
      *
