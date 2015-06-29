@@ -14,11 +14,11 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $PrimaryCacheStore;
 
     /**
-     * The number of seconds a cache value is stored. (default: 10 seconds)
+     * The number of seconds a cache value is stored. (default: 60 seconds)
      *
      * @var int
      */
-    protected $ttl = 600;
+    protected $ttl = 3600;
 
     /**
      * @return int
@@ -159,11 +159,11 @@ class HeartbeatCmsController extends \AbstractCmsController
             foreach ($members as $index => $member) {
 
                 // ActiveDate - TTL (seconds)
-                $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->sub(
+                $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->add(
                     new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
                 );
 
-                if ($date > $this->DateFactory->newStorageDate()) {
+                if ($date < $this->DateFactory->newStorageDate()) {
                     $foundExpiredMembers = true;
                     unset($members[$index]);
                 }
