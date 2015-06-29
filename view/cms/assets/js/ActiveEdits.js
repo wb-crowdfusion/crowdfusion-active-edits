@@ -187,7 +187,7 @@ var ActiveEdits = function() {
   };
 
   var _refresh = function(callback) {
-    $.post('/active-edits/get-members', {slug: taggableRecord.Slug}, function(members) {
+    $.post('/active-edits/' + taggableRecord.Slug, function(members) {
       _updateCount(Object.keys(members).length);
 
       var edits = [], anyEdits = false;
