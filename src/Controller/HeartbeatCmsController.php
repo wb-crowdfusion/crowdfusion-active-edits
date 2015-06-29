@@ -153,7 +153,26 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $cacheKey = $this->generateKey($slug);
 
-        if (!$members = $this->PrimaryCacheStore->get($cacheKey)) {
+        if ($members = $this->PrimaryCacheStore->get($cacheKey)) {
+            $foundExpiredMembers = false;
+
+            foreach ($members as $index => $member) {
+
+                // ActiveDate - TTL (seconds)
+                $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->sub(
+                    new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
+                );
+
+                if ($date > $this->DateFactory->newStorageDate()) {
+                    $foundExpiredMembers = true;
+                    unset($members[$index]);
+                }
+            }
+
+            if ($foundExpiredMembers) {
+                $this->PrimaryCacheStore->put($cacheKey, $members, $this->getTtl());
+            }
+        } else {
             $members = array();
         }
 
