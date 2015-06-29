@@ -59,9 +59,9 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function totalMembersAction()
     {
-        $results = $this->loadMembersFromCache($this->Request->getParameter('slugs'));
+        $members = $this->loadMembersFromCache($slug = $this->Request->getParameter('slugs'));
 
-        echo \JSONUtils::encode($results);
+        echo \JSONUtils::encode(array($slug => $members));
     }
 
     /**
@@ -73,9 +73,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $results = $this->loadMembersFromCache($slug, true);
-
-        $members = count($results) === 1 ? current($results) : array();
+        $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
 
         $this->releaseLock($slug);
 
@@ -93,12 +91,9 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $results = $this->loadMembersFromCache($slug);
+        $members = $this->loadMembersFromCache($slug);
 
-        if (count($results) === 1) {
-            $slug = current(array_keys($results));
-            $members = current($results);
-
+        if (count($members) === 1) {
             foreach ($members as $key => $member) {
                 if ($member['slug'] == $this->getUser()->Slug) {
                     unset($members[$key]);
@@ -126,12 +121,9 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $results = $this->loadMembersFromCache($slug);
+        $members = $this->loadMembersFromCache($slug);
 
-        if (count($results) === 1) {
-            $slug = current(array_keys($results));
-            $members = current($results);
-
+        if (count($members) === 1) {
             foreach ($members as $key => $member) {
                 if ($member['slug'] == $this->getUser()->Slug) {
                     $members[$key]['updateMeta'] = true;
@@ -151,68 +143,67 @@ class HeartbeatCmsController extends \AbstractCmsController
     /**
      * Returns list of members for given slug(s).
      *
-     * @param string|array $slugs
-     * @param boolean $update
+     * @param string $slug
      *
      * @return array List of active members
      */
-    protected function loadMembersFromCache($slugs, $update = false)
+    protected function loadMembersFromCache($slug)
     {
-        $results = array();
+        $key = $this->generateKey($slug);
 
-        if (is_string($slugs)) {
-            $slugs = array($slugs);
-        }
-        if (empty($slugs)) {
-            $slugs = array();
+        if (!$members = $this->PrimaryCacheStore->get($key)) {
+            $members = array();
         }
 
-        foreach ($slugs as $slug) {
-            $key = $this->generateKey($slug);
+        return array_values($members);
+    }
 
-            if (!$members = $this->PrimaryCacheStore->get($key)) {
-                $members = array();
+    /**
+     * Updates slug members.
+     *
+     * @param string $slug
+     * @param array  $members
+     *
+     * @return array List of active members
+     */
+    protected function updateMembersToCache($slug, array $members = array())
+    {
+        $key = $this->generateKey($slug);
+
+        // update logged-in active date
+        $found = false;
+
+        foreach ($members as $key => $member) {
+            if ($member['slug'] == $this->getUser()->Slug) {
+                $found = $key;
+                break;
             }
-
-            // update logged-in active date
-            if ($update) {
-                $found = false;
-
-                foreach ($members as $key => $member) {
-                    if ($member['slug'] == $this->getUser()->Slug) {
-                        $found = $key;
-                        break;
-                    }
-                }
-
-                if ($found !== false) {
-                    $member = $members[$found];
-                } else {
-                    $member = array(
-                        'slug' => $this->getUser()->Slug,
-                        'name' => $this->getUser()->Title,
-                        'activeDate' => null,
-                        'updateMeta' => false,
-                    );
-                }
-
-                // set to now
-                $member['activeDate'] = $this->DateFactory->newStorageDate();
-
-                if ($found !== false) {
-                    $members[$found] = $member;
-                } else {
-                    $members[] = $member;
-                }
-
-                // update
-                $this->PrimaryCacheStore->put($key, $members, $this->getTtl());
-            }
-
-            $results[$slug] = array_values($members);
         }
 
-        return $results;
+        if ($found !== false) {
+            $member = $members[$found];
+        } else {
+            $member = array(
+                'slug' => $this->getUser()->Slug,
+                'name' => $this->getUser()->Title,
+                'activeDate' => null,
+                'updateMeta' => false,
+            );
+        }
+
+        // set to now
+        $member['activeDate'] = $this->DateFactory->newStorageDate();
+
+        if ($found !== false) {
+            $members[$found] = $member;
+        } else {
+            $members[] = $member;
+        }
+
+        // update
+        $this->PrimaryCacheStore->put($key, $members, $this->getTtl());
+
+        return array_values($members);
     }
 
     /**
