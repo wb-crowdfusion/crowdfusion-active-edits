@@ -223,7 +223,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected function startTransaction($slug)
     {
         // loop until key is released
-        while ($this->getTransactionKey($slug)) {
+        while ($this->getTransaction($slug)) {
             sleep(2);
         }
 
