@@ -14,11 +14,11 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $PrimaryCacheStore;
 
     /**
-     * The number of seconds a cache value is stored. (default: 1 day)
+     * The number of seconds a cache value is stored. (default: 1 minute)
      *
      * @var int
      */
-    protected $ttl = 86400;
+    protected $ttl = 3600;
 
     /**
      * @return int
@@ -26,6 +26,14 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function getTtl()
     {
         return $this->ttl;
+    }
+
+    /**
+     * @return \Node
+     */
+    public function getUser()
+    {
+        return $this->RequestContext->getUser();
     }
 
     /**
@@ -63,9 +71,13 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function getMembersAction()
     {
-        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'), true);
+        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+
+        $results = $this->loadMembersFromCache($slug, true);
 
         $members = count($results) === 1 ? current($results) : array();
+
+        $this->endTransaction($slug);
 
         echo \JSONUtils::encode($members);
     }
@@ -79,22 +91,26 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $isDeleted = false;
 
-        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
+        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+
+        $results = $this->loadMembersFromCache($slug);
 
         if (count($results) === 1) {
             $slug = current(array_keys($results));
             $members = current($results);
 
             foreach ($members as $key => $member) {
-                if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
+                if ($member['slug'] == $this->getUser()->Slug) {
                     unset($members[$key]);
 
-                    $isDeleted = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->getTtl());
+                    $isDeleted = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
                     break;
                 }
             }
         }
+
+        $this->endTransaction($slug);
 
         echo $isDeleted ? 'success' : 'error';
     }
@@ -108,22 +124,26 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         $isUpdated = false;
 
-        $results = $this->loadMembersFromCache($this->Request->getParameter('slug'));
+        $this->startTransaction($slug = $this->Request->getParameter('slug'));
+
+        $results = $this->loadMembersFromCache($slug);
 
         if (count($results) === 1) {
             $slug = current(array_keys($results));
             $members = current($results);
 
             foreach ($members as $key => $member) {
-                if ($member['slug'] == $this->RequestContext->getUser()->Slug) {
+                if ($member['slug'] == $this->getUser()->Slug) {
                     $members[$key]['updateMeta'] = true;
 
-                    $isUpdated = $this->PrimaryCacheStore->put(sprintf('active-edits-%s', $slug), $members, $this->getTtl());
+                    $isUpdated = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
                     break;
                 }
             }
         }
+
+        $this->endTransaction($slug);
 
         echo $isUpdated ? 'success' : 'error';
     }
@@ -148,9 +168,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         foreach ($slugs as $slug) {
-            $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '-', $slug);
-
-            $key = sprintf('active-edits-%s', $slug);
+            $key = $this->generateKey($slug);
 
             if (!$members = $this->PrimaryCacheStore->get($key)) {
                 $members = array();
@@ -158,13 +176,10 @@ class HeartbeatCmsController extends \AbstractCmsController
 
             // update logged-in active date
             if ($update) {
-                /** @var \Node $user */
-                $user = $this->RequestContext->getUser();
-
                 $found = false;
 
                 foreach ($members as $key => $member) {
-                    if ($member['slug'] == $user->Slug) {
+                    if ($member['slug'] == $this->getUser()->Slug) {
                         $found = $key;
                         break;
                     }
@@ -174,8 +189,8 @@ class HeartbeatCmsController extends \AbstractCmsController
                     $member = $members[$found];
                 } else {
                     $member = array(
-                        'slug' => $user->Slug,
-                        'name' => $user->Title,
+                        'slug' => $this->getUser()->Slug,
+                        'name' => $this->getUser()->Title,
                         'activeDate' => null,
                         'updateMeta' => false,
                     );
@@ -198,5 +213,68 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         return $results;
+    }
+
+    /**
+     * Starts a transaction.
+     *
+     * @param string $slug
+     */
+    protected function startTransaction($slug)
+    {
+        // loop until key is released
+        while ($this->getTransactionKey($slug)) {
+            sleep(2);
+        }
+
+        $this->PrimaryCacheStore->put($this->getTransactionKey($slug), $this->getUser()->Slug, $this->getTtl());
+    }
+
+    /**
+     * Ends a transaction.
+     *
+     * @param string $slug
+     */
+    protected function endTransaction($slug)
+    {
+        $this->PrimaryCacheStore->delete($this->getTransactionKey($slug));
+    }
+
+    /**
+     * Returns the transaction value.
+     *
+     * @param string $slug
+     *
+     * @return string
+     */
+    protected function getTransaction($slug)
+    {
+        return $this->PrimaryCacheStore->get($this->getTransactionKey($slug));
+    }
+
+    /**
+     * Generates a transaction Memcache key.
+     *
+     * @param string $slug
+     *
+     * @return string
+     */
+    protected function getTransactionKey($slug)
+    {
+        return $this->generateKey($slug, 'active-edits-transaction');
+    }
+
+    /**
+     * Generates a Memcache key.
+     *
+     * @param string $slug
+     *
+     * @return string
+     */
+    protected function generateKey($slug, $prefix = 'active-edits')
+    {
+        $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '-', $slug);
+
+        return sprintf('%s-%s', $prefix, $slug);
     }
 }
