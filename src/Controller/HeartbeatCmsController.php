@@ -65,6 +65,12 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         foreach ($slugs as $slug) {
             $members[$slug] = $this->loadMembersFromCache($slug);
+
+            foreach ($members[$slug] as $index => $member) {
+                if ($this->isMemberExpired($member['pingedAt'])) {
+                    unset($members[$slug][$index]);
+                }
+            }
         }
 
         echo \JSONUtils::encode($members);
@@ -176,11 +182,7 @@ class HeartbeatCmsController extends \AbstractCmsController
                 continue;
             }
 
-            // PingedAt + TTL (seconds)
-            $date = $this->DateFactory->newStorageDate(strtotime($member['pingedAt']))->add(
-                new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
-            );
-            if ($date < $this->DateFactory->newStorageDate()) {
+            if ($this->isMemberExpired($member['pingedAt'])) {
                 unset($members[$index]);
             }
         }
@@ -212,7 +214,23 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * create lock.
+     * Checks if member edit session expired.
+     *
+     * @param string $pingedAt
+     *
+     * @return Boolean
+     */
+    protected function isMemberExpired($pingedAt)
+    {
+        $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
+            new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
+        );
+
+        return $date < $this->DateFactory->newStorageDate();
+    }
+
+    /**
+     * Creates lock.
      *
      * @param string $slug
      */
