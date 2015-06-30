@@ -168,7 +168,6 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function updateMembersToCache($slug, array $members = array())
     {
-        // update logged-in active date
         $found = false;
 
         foreach ($members as $index => $member) {
@@ -177,8 +176,8 @@ class HeartbeatCmsController extends \AbstractCmsController
                 continue;
             }
 
-            // ActiveDate + TTL (seconds)
-            $date = $this->DateFactory->newStorageDate(strtotime($member['activeDate']))->add(
+            // PingedAt + TTL (seconds)
+            $date = $this->DateFactory->newStorageDate(strtotime($member['pingedAt']))->add(
                 new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
             );
             if ($date < $this->DateFactory->newStorageDate()) {
@@ -192,13 +191,13 @@ class HeartbeatCmsController extends \AbstractCmsController
             $member = array(
                 'slug' => $this->getUser()->Slug,
                 'name' => $this->getUser()->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             );
         }
 
         // set to now
-        $member['activeDate'] = $this->DateFactory->newStorageDate();
+        $member['pingedAt'] = $this->DateFactory->newStorageDate();
 
         if ($found !== false) {
             $members[$found] = $member;
