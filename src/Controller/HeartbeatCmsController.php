@@ -256,7 +256,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function getLockKey($slug)
     {
-        return $this->generateKey($slug, 'active-edits-transaction');
+        return $this->generateKey($slug, 'active-edits-lock');
     }
 
     /**
