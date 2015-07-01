@@ -239,16 +239,16 @@ class HeartbeatCmsController extends \AbstractCmsController
         // loop until key is released
         $i = 0;
         do {
-            if ($lock = $this->cacheStore->get($this->getLockKey($slug))) {
+            if ($existingLock = $this->cacheStore->get($this->getLockKey($slug))) {
                 usleep(200000); // 200 milliseconds
 
                 $i += 0.2;
             }
-        } while ($lock && $i < 5); // 5 seconds
+        } while ($existingLock && $i < 5); // 5 seconds
 
         // failed after 3 seconds
-        if ($lock) {
-            throw new \Exception(sprintf('Failed to process data with slug "%s".', $slug));
+        if ($existingLock) {
+            throw new \Exception(sprintf('Failed to acquire lock for slug "%s".', $slug));
         }
 
         $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
@@ -280,6 +280,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      * Generates key.
      *
      * @param string $slug
+     * @param string $prefix
      *
      * @return string
      */
