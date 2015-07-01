@@ -8,10 +8,10 @@ namespace CrowdFusion\Plugin\ActiveEditsPlugin\Controller;
 class HeartbeatCmsController extends \AbstractCmsController
 {
     /** @var \DateFactory */
-    protected $DateFactory;
+    protected $dateFactory;
 
     /** @var \CacheStoreInterface */
-    protected $PrimaryCacheStore;
+    protected $cacheStore;
 
     /**
      * The number of seconds a cache value is stored. (default: 60 seconds)
@@ -37,19 +37,19 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * @param \DateFactory $DateFactory
+     * @param \DateFactory $dateFactory
      */
-    public function setDateFactory(\DateFactory $DateFactory)
+    public function setDateFactory(\DateFactory $dateFactory)
     {
-        $this->DateFactory = $DateFactory;
+        $this->dateFactory = $dateFactory;
     }
 
     /**
-     * @param \CacheStoreInterface $PrimaryCacheStore
+     * @param \CacheStoreInterface $cacheStore
      */
-    public function setPrimaryCacheStore(\CacheStoreInterface $PrimaryCacheStore)
+    public function setPrimaryCacheStore(\CacheStoreInterface $cacheStore)
     {
-        $this->PrimaryCacheStore = $PrimaryCacheStore;
+        $this->cacheStore = $cacheStore;
     }
 
     /**
@@ -109,7 +109,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             if ($member['slug'] == $this->getUser()->Slug) {
                 unset($members[$index]);
 
-                $isDeleted = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
+                $isDeleted = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
                 break;
             }
@@ -137,7 +137,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             if ($member['slug'] == $this->getUser()->Slug) {
                 $members[$index]['updateMeta'] = true;
 
-                $isUpdated = $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
+                $isUpdated = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
                 break;
             }
@@ -157,7 +157,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function loadMembersFromCache($slug)
     {
-        if (!$members = $this->PrimaryCacheStore->get($this->generateKey($slug))) {
+        if (!$members = $this->cacheStore->get($this->generateKey($slug))) {
             $members = array();
         }
 
@@ -199,7 +199,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         // set to now
-        $member['pingedAt'] = $this->DateFactory->newStorageDate();
+        $member['pingedAt'] = $this->dateFactory->newStorageDate();
 
         if ($found !== false) {
             $members[$found] = $member;
@@ -208,7 +208,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         // update
-        $this->PrimaryCacheStore->put($this->generateKey($slug), $members, $this->getTtl());
+        $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
         return array_values($members);
     }
@@ -222,11 +222,11 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function isMemberExpired($pingedAt)
     {
-        $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
+        $date = $this->dateFactory->newStorageDate(strtotime($pingedAt))->add(
             new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
         );
 
-        return $date < $this->DateFactory->newStorageDate();
+        return $date < $this->dateFactory->newStorageDate();
     }
 
     /**
@@ -239,7 +239,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         // loop until key is released
         $i = 0;
         do {
-            if ($lock = $this->PrimaryCacheStore->get($this->getLockKey($slug))) {
+            if ($lock = $this->cacheStore->get($this->getLockKey($slug))) {
                 usleep(200000); // 200 milliseconds
 
                 $i += 0.2;
@@ -251,7 +251,7 @@ class HeartbeatCmsController extends \AbstractCmsController
             throw new \Exception(sprintf('Failed to process data with slug "%s".', $slug));
         }
 
-        $this->PrimaryCacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
+        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
     }
 
     /**
@@ -261,7 +261,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function releaseLock($slug)
     {
-        $this->PrimaryCacheStore->delete($this->getLockKey($slug));
+        $this->cacheStore->delete($this->getLockKey($slug));
     }
 
     /**
