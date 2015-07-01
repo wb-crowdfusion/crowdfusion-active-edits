@@ -168,7 +168,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      * Updates slug members.
      *
      * @param string $slug
-     * @param array  $members
+     * @param array $members
      *
      * @return array List of active members
      */
@@ -223,7 +223,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected function isMemberExpired($pingedAt)
     {
         $date = $this->dateFactory->newStorageDate(strtotime($pingedAt))->add(
-            new \DateInterval(sprintf('PT%dS', round($this->getTtl()/60)))
+            new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
         );
 
         return $date < $this->dateFactory->newStorageDate();
@@ -233,6 +233,7 @@ class HeartbeatCmsController extends \AbstractCmsController
      * Creates lock.
      *
      * @param string $slug
+     * @throws \Exception
      */
     protected function getLock($slug)
     {
