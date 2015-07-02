@@ -18,6 +18,7 @@ $properties['active.edit.heartbeat.frequency'] = 60;
 $properties['active.edit.list.check.frequency'] = 30;
 $properties['active.edit.stale.threshold'] = 45;
 $properties['active.edit.max'] = 50;
+$properties['active.edit.ttl'] = 3600;
     ]]>
   </config>
 

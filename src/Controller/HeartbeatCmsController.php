@@ -20,7 +20,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     /**
      * @param int $ttl
      */
-    public function setTtl($ttl)
+    public function setActiveEditTtl($ttl)
     {
         $this->ttl = $ttl;
     }
