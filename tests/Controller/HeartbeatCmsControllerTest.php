@@ -126,7 +126,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
             'slug' => $this->user->Slug,
             'name' => $this->user->Title,
-            'activeDate' => null,
+            'pingedAt' => null,
             'updateMeta' => false
         ))));
     }
@@ -140,7 +140,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             )
         ));
@@ -156,7 +156,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
             'slug' => $this->user->Slug,
             'name' => $this->user->Title,
-            'activeDate' => null,
+            'pingedAt' => null,
             'updateMeta' => false
         ))));
     }
@@ -170,7 +170,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             )
         ));
@@ -194,13 +194,13 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false
             ),
             array(
                 'slug' => $user->Slug,
                 'name' => $user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false
             )
         )));
@@ -212,7 +212,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             )
         );
@@ -257,7 +257,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             )
         ));
@@ -298,7 +298,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             array(
                 'slug' => $this->user->Slug,
                 'name' => $this->user->Title,
-                'activeDate' => null,
+                'pingedAt' => null,
                 'updateMeta' => false,
             )
         ));
