@@ -287,8 +287,6 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function generateKey($slug, $prefix = 'active-edits')
     {
-        $slug = preg_replace('/[^[:alnum:][:space:]]/ui', '-', $slug);
-
-        return sprintf('%s-%s', $prefix, $slug);
+        return sprintf('%s-%s', $prefix, \SlugUtils::createSlug($slug));
     }
 }
