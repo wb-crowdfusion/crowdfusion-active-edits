@@ -7,7 +7,7 @@
   <info>
     <title>Crowd Fusion - Active Edits</title>
     <provider>Crowd Fusion, Inc.</provider>
-    <description>Provides functionality for tracking concurrent active edits to records. TEST</description>
+    <description>Provides functionality for tracking concurrent active edits to records.</description>
     <priority>10</priority>
     <version>2.0.0-dev</version>
   </info>
