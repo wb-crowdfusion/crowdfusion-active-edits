@@ -1,11 +1,8 @@
-TODO
--------
-
-* Rewrite this entire plugin to store everything in cache.  in the NCR, really guys?... /fin
-
-
 CHANGES
 -------
+
+2.0.0
+    * Removed all NCR references and store data in cache.
 
 1.4.0
     * Removed _updateSaveMessage method and calls to it, with the updated history plugin,
