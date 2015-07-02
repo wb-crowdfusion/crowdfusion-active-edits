@@ -7,9 +7,6 @@ namespace CrowdFusion\Plugin\ActiveEditsPlugin\Controller;
  */
 class HeartbeatCmsController extends \AbstractCmsController
 {
-    /** @var \DateFactory */
-    protected $dateFactory;
-
     /** @var \CacheStoreInterface */
     protected $cacheStore;
 
@@ -37,11 +34,11 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * @param \DateFactory $dateFactory
+     * @param \DateFactory $DateFactory
      */
-    public function setDateFactory(\DateFactory $dateFactory)
+    public function setDateFactory(\DateFactory $DateFactory)
     {
-        $this->dateFactory = $dateFactory;
+        $this->DateFactory = $DateFactory;
     }
 
     /**
@@ -199,7 +196,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         // set to now
-        $member['pingedAt'] = $this->dateFactory->newStorageDate();
+        $member['pingedAt'] = $this->DateFactory->newStorageDate();
 
         if ($found !== false) {
             $members[$found] = $member;
@@ -222,11 +219,11 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function isMemberExpired($pingedAt)
     {
-        $date = $this->dateFactory->newStorageDate(strtotime($pingedAt))->add(
+        $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
             new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
         );
 
-        return $date < $this->dateFactory->newStorageDate();
+        return $date < $this->DateFactory->newStorageDate();
     }
 
     /**

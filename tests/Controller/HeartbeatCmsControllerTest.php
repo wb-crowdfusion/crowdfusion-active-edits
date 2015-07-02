@@ -98,8 +98,6 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->controller->setPrimaryCacheStore($this->cache);
-
-        $this->controller->setDateFactory($DateFactory);
     }
 
     protected function tearDown()
