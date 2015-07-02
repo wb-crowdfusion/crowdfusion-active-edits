@@ -11,11 +11,11 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $cacheStore;
 
     /**
-     * The number of seconds a cache value is stored. (default: 60 seconds)
+     * The number of seconds a cache value is stored. (default: 60*60 seconds = 1 hour)
      *
      * @var int
      */
-    protected $ttl = 60;
+    protected $ttl = 3600;
 
     /**
      * @param int $ttl
