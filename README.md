@@ -3,6 +3,8 @@ CHANGES
 
 2.0.0
     * Removed all NCR references and store data in cache.
+    * Create purge script to remove all `active_edit_*` tables, and all related tags with
+      `ElementID=9` and `Role=active-edit-record`.
 
 1.4.0
     * Removed _updateSaveMessage method and calls to it, with the updated history plugin,
