@@ -24,7 +24,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $Logger = $this->getMock('LoggerInterface');
+        $Logger = new \NullLogger();
 
         $InputClean = $this
             ->getMockBuilder('InputCleanInterface')
@@ -119,9 +119,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->getMembersAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
             'slug' => $this->user->Slug,
@@ -149,9 +148,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->getMembersAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
             'slug' => $this->user->Slug,
@@ -186,9 +184,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->getMembersAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString($output, json_encode(array(
             array(
@@ -228,9 +225,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->totalMembersAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString($output, json_encode($slugs));
     }
@@ -241,9 +237,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->totalMembersAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString($output, json_encode(array($slug => array())));
     }
@@ -266,9 +261,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->updateMetaAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertEquals($output, 'success');
     }
@@ -282,9 +276,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->updateMetaAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertEquals($output, 'error');
     }
@@ -307,9 +300,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->removeMemberAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertEquals($output, 'success');
     }
@@ -323,9 +315,8 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
 
         ob_start();
         $this->controller->removeMemberAction();
-        ob_end_flush();
-
         $output = ob_get_contents();
+        ob_end_clean();
 
         $this->assertEquals($output, 'error');
     }

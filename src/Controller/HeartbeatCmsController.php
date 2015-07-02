@@ -133,9 +133,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 $members[$index]['updateMeta'] = true;
-
                 $isUpdated = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
-
                 break;
             }
         }
