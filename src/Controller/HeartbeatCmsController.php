@@ -219,11 +219,15 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function isMemberExpired($pingedAt)
     {
-        $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
-            new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
-        );
+        if ($pingedAt) {
+            $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
+                new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
+            );
 
-        return $date < $this->DateFactory->newStorageDate();
+            return $date < $this->DateFactory->newStorageDate();
+        }
+
+        return false;
     }
 
     /**
