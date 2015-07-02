@@ -3,14 +3,13 @@ CHANGES
 
 2.0.0
     * Removed all NCR references and store data in cache.
-    * Create purge script to remove all `active_edit_*` tables, and all related tags with
-      `ElementID=9` and `Role=active-edit-record`.
+    * Create an SQL purge script to remove all `active_edit_*` tables, and all related tags with
+      `ElementID=9` and `Role=active-edit-record` from all tables.
 
 1.4.0
     * Removed _updateSaveMessage method and calls to it, with the updated history plugin,
       history elements/aspects/etc are no longer available and this method is no longer valid. Ticket #221
     * Removed config `$properties['active.edit.saved.record.check.frequency']`.
-
 
 1.3.0
 
