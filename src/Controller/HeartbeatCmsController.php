@@ -15,7 +15,15 @@ class HeartbeatCmsController extends \AbstractCmsController
      *
      * @var int
      */
-    protected $ttl = 3600;
+    protected $ttl = 60;
+
+    /**
+     * @param int $ttl
+     */
+    public function setTtl($ttl)
+    {
+        $this->ttl = $ttl;
+    }
 
     /**
      * @return int
@@ -28,7 +36,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     /**
      * @return \Node
      */
-    public function getUser()
+    protected function getUser()
     {
         return $this->RequestContext->getUser();
     }
@@ -105,9 +113,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 unset($members[$index]);
-
                 $isDeleted = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
-
                 break;
             }
         }
@@ -193,7 +199,6 @@ class HeartbeatCmsController extends \AbstractCmsController
             );
         }
 
-        // set to now
         $member['pingedAt'] = $this->DateFactory->newStorageDate();
 
         if ($found !== false) {
@@ -202,7 +207,6 @@ class HeartbeatCmsController extends \AbstractCmsController
             $members[] = $member;
         }
 
-        // update
         $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
 
         return array_values($members);
@@ -236,17 +240,14 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function getLock($slug)
     {
-        // loop until key is released
         $i = 0;
         do {
             if ($existingLock = $this->cacheStore->get($this->getLockKey($slug))) {
                 usleep(200000); // 200 milliseconds
-
                 $i += 0.2;
             }
-        } while ($existingLock && $i < 5); // 5 seconds
+        } while ($existingLock && $i < 5);
 
-        // failed after 3 seconds
         if ($existingLock) {
             throw new \Exception(sprintf('Failed to acquire lock for slug "%s".', $slug));
         }
