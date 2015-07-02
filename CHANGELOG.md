@@ -3,7 +3,10 @@
 
 ## v2.0.0
 * Removed all NCR references and store data in cache.
-* Create an SQL purge script to remove all `active_edit_*` tables, and all related tags with `ElementID=9` and `Role=active-edit-record` from all tables.
+* Create an SQL purge script to remove all `active_edit_*` tables, and all related tags with `ElementID` and `Role=active-edit-record` from all tables. Github Issue #1
+
+> Note: ElementID is different per site.
+
 
 
 ## v1.4.0
