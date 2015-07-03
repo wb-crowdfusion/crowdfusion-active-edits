@@ -20,15 +20,15 @@ class HeartbeatCmsController extends \AbstractCmsController
     /**
      * @param int $ttl
      */
-    public function setActiveEditTtl($ttl)
+    public function setActiveEditTtl($ttl = 3600)
     {
-        $this->ttl = $ttl;
+        $this->ttl = \NumberUtils::bound($ttl, 10, 14400);
     }
 
     /**
      * @return int
      */
-    public function getTtl()
+    protected function getTtl()
     {
         return $this->ttl;
     }
@@ -82,32 +82,24 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Returns list members for a given slug.
-     *
-     * @return string JSON of members list
+     * Echoes a list of members for a given slug in json.
      */
     public function getMembersAction()
     {
         $this->getLock($slug = $this->Request->getParameter('slug'));
-
         $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
-
         $this->releaseLock($slug);
-
         echo \JSONUtils::encode($members);
     }
 
     /**
-     * Removed the current logged-in user for a given slug.
-     *
-     * @return string JSON, success or error
+     * Removes the current logged-in user for a given slug.
+     * Echoes string with success or error
      */
     public function removeMemberAction()
     {
         $isDeleted = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
-
         $members = $this->loadMembersFromCache($slug);
 
         foreach ($members as $index => $member) {
@@ -119,21 +111,17 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         $this->releaseLock($slug);
-
         echo $isDeleted ? 'success' : 'error';
     }
 
     /**
      * Sets the current logged-in user for a given slug with "updateMeta=true".
-     *
-     * @return string JSON, success or error
+     * Echoes string with success or error
      */
     public function updateMetaAction()
     {
         $isUpdated = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
-
         $members = $this->loadMembersFromCache($slug);
 
         foreach ($members as $index => $member) {
@@ -145,7 +133,6 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         $this->releaseLock($slug);
-
         echo $isUpdated ? 'success' : 'error';
     }
 
@@ -233,7 +220,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Creates lock.
+     * Creates lock for the given slug.  Lock will only last for 10 seconds.
      *
      * @param string $slug
      * @throws \Exception
@@ -249,10 +236,12 @@ class HeartbeatCmsController extends \AbstractCmsController
         } while ($existingLock && $i < 5);
 
         if ($existingLock) {
-            throw new \Exception(sprintf('Failed to acquire lock for slug "%s".', $slug));
+            throw new \Exception(
+                sprintf('Failed to acquire lock for slug "%s", currently locked by "%s".', $slug, $existingLock)
+            );
         }
 
-        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
+        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, 10);
     }
 
     /**
