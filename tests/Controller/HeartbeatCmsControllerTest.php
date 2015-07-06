@@ -370,6 +370,6 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
      */
     private function addSlugToCache($slug, array $members = array())
     {
-        $this->cache->put(sprintf('active-edits-%s', $slug), $members, $this->controller->getTtl());
+        $this->cache->put(sprintf('active-edits-%s', $slug), $members, 60);
     }
 }

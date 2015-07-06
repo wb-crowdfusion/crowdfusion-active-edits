@@ -11,24 +11,24 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $cacheStore;
 
     /**
-     * The number of seconds a cache value is stored. (default: 60*60 seconds = 1 hour)
+     * The number of seconds a cache value is stored. (default: 180 seconds)
      *
      * @var int
      */
-    protected $ttl = 3600;
+    protected $ttl = 180;
 
     /**
      * @param int $ttl
      */
-    public function setActiveEditTtl($ttl)
+    public function setActiveEditTtl($ttl = 180)
     {
-        $this->ttl = $ttl;
+        $this->ttl = \NumberUtils::bound($ttl, 10, 14400);
     }
 
     /**
      * @return int
      */
-    public function getTtl()
+    protected function getTtl()
     {
         return $this->ttl;
     }
@@ -58,19 +58,14 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Returns list total members for each slug.
-     *
-     * @return string JSON of slug -> count(members)
+     * Echoes a list of members for a each given slug in json.
      */
     public function totalMembersAction()
     {
         $members = array();
-
-        $slugs = $this->Request->getParameter('slugs');
-
+        $slugs   = $this->Request->getParameter('slugs');
         foreach ($slugs as $slug) {
             $members[$slug] = $this->loadMembersFromCache($slug);
-
             foreach ($members[$slug] as $index => $member) {
                 if ($this->isMemberExpired($member['pingedAt'])) {
                     unset($members[$slug][$index]);
@@ -82,34 +77,26 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Returns list members for a given slug.
-     *
-     * @return string JSON of members list
+     * Echoes a list of members for a given slug in json.
      */
     public function getMembersAction()
     {
         $this->getLock($slug = $this->Request->getParameter('slug'));
-
         $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
-
         $this->releaseLock($slug);
-
         echo \JSONUtils::encode($members);
     }
 
     /**
-     * Removed the current logged-in user for a given slug.
-     *
-     * @return string JSON, success or error
+     * Removes the current logged-in user for a given slug.
+     * Echoes string with success or error
      */
     public function removeMemberAction()
     {
-        $isDeleted = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $members = $this->loadMembersFromCache($slug);
-
+        $isDeleted = false;
+        $members   = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 unset($members[$index]);
@@ -125,17 +112,14 @@ class HeartbeatCmsController extends \AbstractCmsController
 
     /**
      * Sets the current logged-in user for a given slug with "updateMeta=true".
-     *
-     * @return string JSON, success or error
+     * Echoes string with success or error
      */
     public function updateMetaAction()
     {
-        $isUpdated = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $members = $this->loadMembersFromCache($slug);
-
+        $isUpdated = false;
+        $members   = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 $members[$index]['updateMeta'] = true;
@@ -223,7 +207,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         if ($pingedAt) {
             $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
-                new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
+                new \DateInterval(sprintf('PT%dS', $this->getTtl()))
             );
 
             return $date < $this->DateFactory->newStorageDate();
@@ -233,7 +217,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Creates lock.
+     * Creates lock for the given slug.  Lock will only last for 10 seconds.
      *
      * @param string $slug
      * @throws \Exception
@@ -249,10 +233,12 @@ class HeartbeatCmsController extends \AbstractCmsController
         } while ($existingLock && $i < 5);
 
         if ($existingLock) {
-            throw new \Exception(sprintf('Failed to acquire lock for slug "%s".', $slug));
+            throw new \Exception(
+                sprintf('Failed to acquire lock for slug "%s", currently locked by "%s".', $slug, $existingLock)
+            );
         }
 
-        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, $this->getTtl());
+        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, 10);
     }
 
     /**
