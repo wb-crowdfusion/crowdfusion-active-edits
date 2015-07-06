@@ -3,10 +3,11 @@
 
 ## v2.0.1
 * issue #3: [HeartbeatCmsController] Ensure that a lock for a given slug expires in 10 seconds, not 1 hour.
+* issue #3: [HeartbeatCmsController] Reduce cache ttl to 2 minutes for all active edit keys.
 
 
 ## v2.0.0
-* Removed all NCR references and store data in cache.
+* issue #1: Removed all NCR references and store data in cache.
 * issue #1: Create an SQL purge script to remove all `active_edit_*` tables, and all related tags with `ElementID` and `Role=active-edit-record` from all tables.
 
 > Note: ElementID is different per site.
