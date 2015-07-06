@@ -63,9 +63,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function totalMembersAction()
     {
         $members = array();
-
-        $slugs = $this->Request->getParameter('slugs');
-
+        $slugs   = $this->Request->getParameter('slugs');
         foreach ($slugs as $slug) {
             $members[$slug] = $this->loadMembersFromCache($slug);
             foreach ($members[$slug] as $index => $member) {
@@ -84,11 +82,8 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function getMembersAction()
     {
         $this->getLock($slug = $this->Request->getParameter('slug'));
-
         $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
-
         $this->releaseLock($slug);
-
         echo \JSONUtils::encode($members);
     }
 
@@ -98,11 +93,10 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function removeMemberAction()
     {
-        $isDeleted = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $members = $this->loadMembersFromCache($slug);
+        $isDeleted = false;
+        $members   = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 unset($members[$index]);
@@ -122,11 +116,10 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function updateMetaAction()
     {
-        $isUpdated = false;
-
         $this->getLock($slug = $this->Request->getParameter('slug'));
 
-        $members = $this->loadMembersFromCache($slug);
+        $isUpdated = false;
+        $members   = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 $members[$index]['updateMeta'] = true;
