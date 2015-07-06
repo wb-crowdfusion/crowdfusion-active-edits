@@ -11,16 +11,16 @@ class HeartbeatCmsController extends \AbstractCmsController
     protected $cacheStore;
 
     /**
-     * The number of seconds a cache value is stored. (default: 60*60 seconds = 1 hour)
+     * The number of seconds a cache value is stored. (default: 180 seconds)
      *
      * @var int
      */
-    protected $ttl = 3600;
+    protected $ttl = 180;
 
     /**
      * @param int $ttl
      */
-    public function setActiveEditTtl($ttl = 3600)
+    public function setActiveEditTtl($ttl = 180)
     {
         $this->ttl = \NumberUtils::bound($ttl, 10, 14400);
     }
@@ -58,9 +58,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     }
 
     /**
-     * Returns list total members for each slug.
-     *
-     * @return string JSON of slug -> count(members)
+     * Echoes a list of members for a each given slug in json.
      */
     public function totalMembersAction()
     {
@@ -70,7 +68,6 @@ class HeartbeatCmsController extends \AbstractCmsController
 
         foreach ($slugs as $slug) {
             $members[$slug] = $this->loadMembersFromCache($slug);
-
             foreach ($members[$slug] as $index => $member) {
                 if ($this->isMemberExpired($member['pingedAt'])) {
                     unset($members[$slug][$index]);
@@ -87,8 +84,11 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function getMembersAction()
     {
         $this->getLock($slug = $this->Request->getParameter('slug'));
+
         $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
+
         $this->releaseLock($slug);
+
         echo \JSONUtils::encode($members);
     }
 
@@ -99,9 +99,10 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function removeMemberAction()
     {
         $isDeleted = false;
-        $this->getLock($slug = $this->Request->getParameter('slug'));
-        $members = $this->loadMembersFromCache($slug);
 
+        $this->getLock($slug = $this->Request->getParameter('slug'));
+
+        $members = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 unset($members[$index]);
@@ -111,6 +112,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         $this->releaseLock($slug);
+
         echo $isDeleted ? 'success' : 'error';
     }
 
@@ -121,9 +123,10 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function updateMetaAction()
     {
         $isUpdated = false;
-        $this->getLock($slug = $this->Request->getParameter('slug'));
-        $members = $this->loadMembersFromCache($slug);
 
+        $this->getLock($slug = $this->Request->getParameter('slug'));
+
+        $members = $this->loadMembersFromCache($slug);
         foreach ($members as $index => $member) {
             if ($member['slug'] == $this->getUser()->Slug) {
                 $members[$index]['updateMeta'] = true;
@@ -133,6 +136,7 @@ class HeartbeatCmsController extends \AbstractCmsController
         }
 
         $this->releaseLock($slug);
+
         echo $isUpdated ? 'success' : 'error';
     }
 
@@ -210,7 +214,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     {
         if ($pingedAt) {
             $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
-                new \DateInterval(sprintf('PT%dS', round($this->getTtl() / 60)))
+                new \DateInterval(sprintf('PT%dS', $this->getTtl()))
             );
 
             return $date < $this->DateFactory->newStorageDate();
