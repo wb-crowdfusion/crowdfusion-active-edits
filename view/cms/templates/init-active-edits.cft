@@ -1,5 +1,5 @@
 {% begin noresults %}
-  {% if Data:CONTROL_ACTION_METHOD !eq 'add' %}
+  {% if Data:CONTROL_ACTION_METHOD eq 'edit' %}
     <script language="JavaScript" type="text/javascript">
       $(document).ready( function() {
         ActiveEdits.init(document.taggableRecord,{
