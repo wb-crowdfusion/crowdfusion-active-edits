@@ -63,7 +63,7 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function totalMembersAction()
     {
         $members = array();
-        $slugs   = $this->Request->getParameter('slugs');
+        $slugs   = (array)$this->Request->getParameter('slugs');
         foreach ($slugs as $slug) {
             $members[$slug] = $this->loadMembersFromCache($slug);
             foreach ($members[$slug] as $index => $member) {
