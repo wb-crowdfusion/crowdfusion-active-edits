@@ -3,6 +3,7 @@
 
 ## v2.0.2
 * issue #5: Load ActiveEdits script only when editing an object.
+* issue #8: [HeartbeatCmsController] Force slugs parameter to be array.
 
 
 ## v2.0.1
