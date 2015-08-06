@@ -1,6 +1,10 @@
 # CHANGELOG
 
 
+## v2.0.2
+* issue #5: Load ActiveEdits script only when editing an object.
+
+
 ## v2.0.1
 * issue #3: [HeartbeatCmsController] Ensure that a lock for a given slug expires in 10 seconds, not 1 hour.
 * issue #3: [HeartbeatCmsController] Reduce cache ttl to 2 minutes for all active edit keys.
