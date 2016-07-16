@@ -1,6 +1,11 @@
 # CHANGELOG
 
 
+## v2.0.3
+* issue #11: Added warning popup alerting with the user who's editing object.
+* issue #12: Fixed realtime caching of edit users.
+
+
 ## v2.0.2
 * issue #5: Load ActiveEdits script only when editing an object.
 * issue #8: [HeartbeatCmsController] Force slugs parameter to be array.

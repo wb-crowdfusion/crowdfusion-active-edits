@@ -9,16 +9,14 @@
     <provider>Crowd Fusion, Inc.</provider>
     <description>Provides functionality for tracking concurrent active edits to records.</description>
     <priority>10</priority>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
   </info>
 
   <config>
     <![CDATA[
-$properties['active.edit.heartbeat.frequency'] = 60;
+$properties['active.edit.heartbeat.frequency'] = 30;
 $properties['active.edit.list.check.frequency'] = 30;
-$properties['active.edit.stale.threshold'] = 45;
-$properties['active.edit.max'] = 50;
-$properties['active.edit.ttl'] = 180; // make sure larger then "heartbeat frequency" (Ajax refresh timeout)
+$properties['active.edit.ttl'] = 45; // make sure larger then "heartbeat frequency" (Ajax refresh timeout)
     ]]>
   </config>
 

@@ -16,9 +16,8 @@ var ActiveEdits = function() {
       UpdateMetaNonce: null,
       ServerDate: null,
       HeartbeatFrequency: 60,
-      StaleActiveEditThreshold: 45,
-      MaxActiveEdits: 50,
-      ListCheckFrequency: 30
+      ListCheckFrequency: 30,
+      PopupLoaded: false
     }, _options || {});
   };
 
@@ -76,13 +75,13 @@ var ActiveEdits = function() {
       $.each(json, function(slug, members) {
         if (members.length === 0) return;
 
-        var
-          tr = $('#app-content table.data tr:[id=' + slug + ']'),
-          tr = tr.length ? tr : $('#app-content table.data tr:[id=collapsed_' + slug + ']'),
-          td = tr.children('td:eq(' + listTitleIndex + ')'),
+        var tr = $('#app-content table.data tr:[id=' + slug + ']');
+        tr = tr.length ? tr : $('#app-content table.data tr:[id=collapsed_' + slug + ']');
+
+        var td = tr.children('td:eq(' + listTitleIndex + ')'),
           span = $('span.active-edit-count', td);
 
-        if (span.length == 0) {
+        if (span.length === 0) {
           span = $('<span class="active-edit-count" style="display:none">' + members.length + '</span>');
           td.prepend(span);
           span.fadeIn(2000);
@@ -129,8 +128,6 @@ var ActiveEdits = function() {
   };
 
   var _initEdit = function() {
-    _removeMe(); // may have to make this synchronous if ajax requests overlap for list expand
-
     formChanged = false;
     loadDate = new Date();
 
@@ -208,7 +205,7 @@ var ActiveEdits = function() {
           return false;
         });
 
-        if (found.length == 0) {
+        if (found.length === 0) {
           edits.push({
             MemberSlug: member.slug,
             Count: 1,
@@ -238,6 +235,8 @@ var ActiveEdits = function() {
       if (typeof callback == 'function') {
         callback();
       }
+
+      warningPopup().execute(edits);
     }, 'json');
   };
 
@@ -292,6 +291,105 @@ var ActiveEdits = function() {
         .replace(/-+$/, '');       // Trim - from end of text
   };
 
+  /**
+   * Contains functionality for warning popup addition.
+   *
+   * @depended on http://www.ericmmartin.com/projects/simplemodal/
+   */
+  var warningPopup = function warningPopup() {
+    var objActiveEditors = null;
+
+    var showModal = function(html) {
+      var myOptions = {
+        focus: true,
+        opacity: 80,
+        minHeight: 350,
+        minWidth: 650,
+        dataId: 'warningModal',
+        overlayClose: false,
+        onShow: function(dialog) {
+          dialog.container.addClass('warning');
+          modalAttachments();
+        },
+        onOpen: function(dialog) {
+          dialog.overlay.fadeIn(100, function() {
+            dialog.container.slideDown('fast', function() {
+              // dialog.data.fadeIn('fast');
+              dialog.data.show();
+            });
+          });
+        }
+      };
+
+      $.modal(html, myOptions);
+    };
+
+    /**
+     * Routine Attached to modal when it loads.
+     *
+     * Note: using LIVE instead of on since old version of jquery is installed in cms
+     */
+    var modalAttachments = function() {
+      $('.btn-ae-continue').live('click', function() {
+        $.modal.close();
+      });
+
+      $('.btn-ae-cancel').live('click', function() {
+        history.go(-1);
+      });
+    };
+
+    var execute = function(activeEditors) {
+      if (activeEditors) {
+        objActiveEditors = activeEditors;
+      }
+      if (options.PopupLoaded) {
+        return;
+      }
+
+      // number of unique users
+      var numUsers = activeEditors.length;
+
+      // only a single user (yourself)
+      if (numUsers < 2) {
+        return;
+      }
+
+      // name of the first user is listed last in the object
+      var activeUserNameTxt = activeEditors[0].Title,
+        fullNameArray = activeUserNameTxt.split(' '),
+        firstName = fullNameArray[0],
+        lastName = fullNameArray[fullNameArray.length - 1];
+
+      var strWarnMessage = '<span class="activeUserName">' + activeUserNameTxt + '</span> is editing this post';
+      var strCancelMessage = 'Cancel and ask ' + firstName + ' to get out of the post';
+
+      if (numUsers > 2) {
+        strWarnMessage = 'There are multiple users editing this post';
+        strCancelMessage = 'Cancel and ask the active users to get out of the post';
+      }
+
+      var html = '<div>' +
+        '<h1 class="title">STOP</h1>' +
+        '<div class="message">{' + strWarnMessage + '}</div>' +
+        '<div class="btn-container">' +
+          '<button type="button" class="btn-ae-continue">Enter at your own risk</button>' +
+          '<button type="button" class="btn-ae-cancel">' + strCancelMessage + '</button>' +
+        '</div>' +
+      '</div>';
+
+      showModal(html);
+
+      options.PopupLoaded = true;
+    };
+
+    return {
+      showModal: showModal,
+      activeEditors: objActiveEditors,
+      execute: execute
+    };
+  };
+
   return {
     initList: function(_options) {
       _initList(_options);
@@ -314,6 +412,8 @@ var ActiveEdits = function() {
 
     removeMe: function() {
       _removeMe();
-    }
-  }
+    },
+
+    popupMethods: warningPopup()
+  };
 }();

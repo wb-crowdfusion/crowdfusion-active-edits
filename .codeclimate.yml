@@ -1,0 +1,19 @@
+exclude_paths:
+  - '/vendor/*'
+  - '/system/vendors/*'
+
+engines:
+  phpcodesniffer:
+    enabled: true
+    config:
+      file_extensions: 'php'
+      standard: 'PSR1'
+  phpmd:
+    enabled: true
+    config:
+      file_extensions: 'php'
+      rulesets: 'cleancode,codesize,design,naming,unusedcode'
+
+ratings:
+  paths:
+    - '**.php'

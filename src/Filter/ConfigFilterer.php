@@ -10,12 +10,6 @@ class ConfigFilterer extends \AbstractFilterer
     /** @var int */
     protected $listCheckFrequency;
 
-    /** @var int */
-    protected $staleThreshold;
-
-    /** @var int */
-    protected $max;
-
     /**
      * @param int $val
      */
@@ -30,22 +24,6 @@ class ConfigFilterer extends \AbstractFilterer
     public function setActiveEditListCheckFrequency($val)
     {
         $this->listCheckFrequency = $val;
-    }
-
-    /**
-     * @param int $val
-     */
-    public function setActiveEditStaleThreshold($val)
-    {
-        $this->staleThreshold = $val;
-    }
-
-    /**
-     * @param int $val
-     */
-    public function setActiveEditMax($val)
-    {
-        $this->max = $val;
     }
 
     /**
@@ -65,9 +43,7 @@ class ConfigFilterer extends \AbstractFilterer
     {
         return <<<EOD
 HeartbeatFrequency : {$this->heartbeatFrequency},
-ListCheckFrequency : {$this->listCheckFrequency},
-StaleActiveEditThreshold : {$this->staleThreshold},
-MaxActiveEdits : {$this->max}
+ListCheckFrequency : {$this->listCheckFrequency}
 EOD;
     }
 }
