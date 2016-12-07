@@ -1,8 +1,10 @@
 <?xml version='1.0'?>
 <context
-    xmlns="http://www.crowdfusion.com/schema/context"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.crowdfusion.com/schema/context http://www.crowdfusion.com/schema/crowdfusion-context-2.0.xsd">
+  xmlns="http://www.crowdfusion.com/schema/context"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.crowdfusion.com/schema/context http://www.crowdfusion.com/schema/crowdfusion-context-2.0.xsd">
+
+  <import>shared-context.xml</import>
 
   <objects>
     <object id="ActiveeditheartbeatCmsController" class="CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController"/>

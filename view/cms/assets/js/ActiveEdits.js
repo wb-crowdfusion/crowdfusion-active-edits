@@ -17,6 +17,9 @@ var ActiveEdits = function() {
       ServerDate: null,
       HeartbeatFrequency: 60,
       ListCheckFrequency: 30,
+      CurrentUser: {
+        Slug: null
+      },
       PopupLoaded: false
     }, _options || {});
   };
@@ -90,7 +93,7 @@ var ActiveEdits = function() {
         }
 
         $.each(members, function(i, member) {
-          members[i] = { Title: member.name, Count: 1 }; // count always going to be 1
+          members[i] = { Title: member.user_name, Count: 1 }; // count always going to be 1
         });
 
         span.data('memberList', members);
@@ -191,9 +194,9 @@ var ActiveEdits = function() {
 
       $.each(members, function(i, member) {
         var found = $.grep(edits, function(edit) {
-          if (edit.MemberSlug == member.slug) {
+          if (edit.Slug == member.user_slug) {
 
-            if (member.updateMeta) {
+            if (member.meta_updated) {
               edit.Edits = true;
             }
 
@@ -207,10 +210,10 @@ var ActiveEdits = function() {
 
         if (found.length === 0) {
           edits.push({
-            MemberSlug: member.slug,
             Count: 1,
-            Edits: member.updateMeta,
-            Title: member.name
+            Slug: member.user_slug,
+            Title: member.user_name,
+            Edits: member.meta_updated
           });
         }
       });
@@ -241,9 +244,19 @@ var ActiveEdits = function() {
   };
 
   var _updateFormChanged = function() {
-    $.post('/active-edits/' + taggableRecord.Slug + '/update-meta', function(response) {
-      if (response == 'error') formChanged = false;
-    }, 'json');
+    $.ajax({
+      type: 'POST',
+      dataType: 'json',
+      async: false,
+      url: '/active-edits/' + taggableRecord.Slug + '/update-meta',
+      complete: function(response) {
+        _refresh();
+
+        if (response == 'error') {
+          formChanged = false;
+        }
+      }
+    });
   };
 
   var _addMe = function() {
@@ -256,8 +269,20 @@ var ActiveEdits = function() {
 
       DOM.activatePanelLink.fadeIn(1500);
 
-      $(window).unload(function() {
+      window.addEventListener('beforeunload', function() {
         _removeMe();
+      });
+      window.addEventListener('unload', function() {
+        _removeMe();
+
+        if (DOM.activatePanelLink) {
+          DOM.activatePanelLink.remove();
+        }
+        if (DOM.editListPanel) {
+          DOM.editListPanel.remove();
+        }
+
+        clearInterval(timers.Refresh);
       });
 
       $(document).bind('form_changed', function() {
@@ -270,16 +295,14 @@ var ActiveEdits = function() {
   };
 
   var _removeMe = function() {
-    if (DOM.activatePanelLink) {
-      DOM.activatePanelLink.remove();
-    }
-    if (DOM.editListPanel) {
-      DOM.editListPanel.remove();
-    }
+    formChanged = false;
 
-    clearInterval(timers.Refresh);
-
-    $.post('/active-edits/' + taggableRecord.Slug + '/remove-member', function(response) {}, 'json');
+    $.ajax({
+      type: 'POST',
+      dataType: 'json',
+      async: false,
+      url: '/active-edits/' + taggableRecord.Slug + '/remove-member'
+    });
   };
 
   var _slugify = function(slug) {
@@ -352,17 +375,24 @@ var ActiveEdits = function() {
 
       // only a single user (yourself)
       if (numUsers < 2) {
+        // ignore popup for first user
+        options.PopupLoaded = true;
+
         return;
       }
 
       // name of the first user is listed last in the object
-      var activeUserNameTxt = activeEditors[0].Title,
-        fullNameArray = activeUserNameTxt.split(' '),
-        firstName = fullNameArray[0],
-        lastName = fullNameArray[fullNameArray.length - 1];
+      var name;
+      for (var i in activeEditors) {
+        var user = activeEditors[i];
 
-      var strWarnMessage = '<span class="activeUserName">' + activeUserNameTxt + '</span> is editing this post';
-      var strCancelMessage = 'Cancel and ask ' + firstName + ' to get out of the post';
+        if (!name && options.CurrentUser.Slug !== user.Slug) {
+          name = user.Title;
+        }
+      }
+
+      var strWarnMessage = '<span class="activeUserName">' + name + '</span> is editing this post';
+      var strCancelMessage = 'Cancel and ask ' + name + ' to get out of the post';
 
       if (numUsers > 2) {
         strWarnMessage = 'There are multiple users editing this post';
@@ -371,7 +401,7 @@ var ActiveEdits = function() {
 
       var html = '<div>' +
         '<h1 class="title">STOP</h1>' +
-        '<div class="message">{' + strWarnMessage + '}</div>' +
+        '<div class="message">' + strWarnMessage + '</div>' +
         '<div class="btn-container">' +
           '<button type="button" class="btn-ae-continue">Enter at your own risk</button>' +
           '<button type="button" class="btn-ae-cancel">' + strCancelMessage + '</button>' +

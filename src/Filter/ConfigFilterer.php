@@ -41,9 +41,12 @@ class ConfigFilterer extends \AbstractFilterer
      */
     protected function config()
     {
+        $user = json_encode($this->RequestContext->getUser());
+
         return <<<EOD
 HeartbeatFrequency : {$this->heartbeatFrequency},
-ListCheckFrequency : {$this->listCheckFrequency}
+ListCheckFrequency : {$this->listCheckFrequency},
+CurrentUser : $user,
 EOD;
     }
 }

@@ -2,16 +2,17 @@
 
 namespace CrowdFusion\Tests\Plugin\ActiveEditsPlugin\Controller;
 
-use CrowdFusion\Tests\Caching\Stores\Mock\MemcachedMock;
+use CrowdFusion\Plugin\ActiveEditsPlugin\Repository\InMemoryActiveEditRepository;
 use CrowdFusion\Plugin\ActiveEditsPlugin\Controller\HeartbeatCmsController;
+use CrowdFusion\Plugin\ActiveEditsPlugin\Entity\User;
 
-class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
+class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
 {
     /** @var HeartbeatCmsController */
     protected $controller;
 
-    /** @var \MemcachedCacheStore */
-    protected $cache;
+    /** @var InMemoryActiveEditRepository */
+    protected $repository;
 
     /** @var \Request */
     protected $request;
@@ -19,7 +20,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     /** @var \RequestContext */
     protected $requestContext;
 
-    /** @var \stdClass */
+    /** @var User */
     protected $user;
 
     protected function setUp()
@@ -32,7 +33,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             ->getMock();
         $this->request = new \Request($InputClean, '/');
 
-        $this->user = new \stdClass();
+        $this->user = new User();
         $this->user->Slug = 'jonnytest';
         $this->user->Title = 'Jonny Test';
 
@@ -47,10 +48,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             ->getMock();
 
         $Permissions = $this->getMock('Permissions');
-        $DateFactory = $this
-            ->getMockBuilder('DateFactory')
-            ->disableOriginalConstructor()
-            ->getMock();
+        $DateFactory = new \DateFactory('America/Los_Angeles', 'America/Los_Angeles');
 
         $ModelMapper = $this->getMock('ModelMapper');
 
@@ -78,30 +76,15 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
             false
         );
 
-        if (!class_exists('Memcached')) {
-            MemcachedMock::create();
-        }
+        $this->repository = new InMemoryActiveEditRepository(45, $DateFactory);
 
-        $this->cache = new \MemcachedCacheStore(
-            new \NullLogger(),
-            array(array(
-                'host' => '127.0.0.1',
-                'port' => 11211
-            )),
-            sprintf('test_%s_', md5(rand())),
-            true,
-            'cf_memcached_tests',
-            false,
-            false,
-            false,
-            false
-        );
-
-        $this->controller->setPrimaryCacheStore($this->cache);
+        $this->controller->setActiveEditRepository($this->repository);
+        $this->controller->setDateFactory($DateFactory);
     }
 
     protected function tearDown()
     {
+        unset($this->repository);
         unset($this->controller);
     }
 
@@ -122,27 +105,22 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $output = ob_get_contents();
         ob_end_clean();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
-            'slug' => $this->user->Slug,
-            'name' => $this->user->Title,
-            'pingedAt' => null,
-            'updateMeta' => false
-        ))));
+        $output = $this->removeOutputDatetime($output);
+
+        $this->assertEquals($output, array(array(
+            'slug' => $slug,
+            'user_slug' => $this->user->Slug,
+            'user_name' => $this->user->Title,
+            'meta_updated' => false
+        )));
     }
 
     /**
      * @dataProvider getSlugs
      */
-    public function testGetMembersActionSlugInCache($slug)
+    public function testGetMembersActionSlugInDb($slug)
     {
-        $this->addSlugToCache($slug, array(
-            array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            )
-        ));
+        $this->repository->addUser($slug, $this->user);
 
         $this->request->addRouteParameters(array('slug' => $slug));
 
@@ -151,12 +129,14 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $output = ob_get_contents();
         ob_end_clean();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array(array(
-            'slug' => $this->user->Slug,
-            'name' => $this->user->Title,
-            'pingedAt' => null,
-            'updateMeta' => false
-        ))));
+        $output = $this->removeOutputDatetime($output);
+
+        $this->assertEquals($output, array(array(
+            'slug' => $slug,
+            'user_slug' => $this->user->Slug,
+            'user_name' => $this->user->Title,
+            'meta_updated' => false
+        )));
     }
 
     /**
@@ -164,17 +144,10 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetMembersActionWithMultiUsers($slug)
     {
-        $this->addSlugToCache($slug, array(
-            array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            )
-        ));
+        $this->repository->addUser($slug, $this->user);
 
         // set new user
-        $user = new \stdClass();
+        $user = new User();
         $user->Slug = 'bobdoll';
         $user->Title = 'Bob Doll';
         // update logged-in user
@@ -183,44 +156,54 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->request->addRouteParameters(array('slug' => $slug));
 
         ob_start();
-        $this->controller->getMembersAction();
+        $this->controller->getMembersAction($this instanceof HeartbeatCmsControllerInMemoryTest);
         $output = ob_get_contents();
         ob_end_clean();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array(
+        $output = $this->removeOutputDatetime($output);
+
+        // sort alphabeticly
+        if ($output[0]['user_slug'] === $user->Slug) {
+            $output = array_reverse($output);
+        }
+
+        $this->assertEquals($output, array(
             array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false
+                'slug' => $slug,
+                'user_slug' => $this->user->Slug,
+                'user_name' => $this->user->Title,
+                'meta_updated' => false
             ),
             array(
-                'slug' => $user->Slug,
-                'name' => $user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false
+                'slug' => $slug,
+                'user_slug' => $user->Slug,
+                'user_name' => $user->Title,
+                'meta_updated' => false
             )
-        )));
+        ));
+
+        // reload logged-in user
+        $this->requestContext->setUser($this->user);
     }
 
     public function testTotalMembersAction()
     {
-        $members = array(
-            array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            )
-        );
-
         $slugs = array();
         foreach ($this->getSlugs() as $slug) {
-            $slugs[$slug[0]] = $members;
+            if (!isset($slugs[$slug[0]])) {
+                $slugs[$slug[0]] = [];
+            }
 
-            $this->addSlugToCache($slug[0], $members);
+            $slugs[$slug[0]][] = array(
+                'slug' => $slug[0],
+                'user_slug' => $this->user->Slug,
+                'user_name' => $this->user->Title,
+                'meta_updated' => false,
+            );
 
+            $this->repository->addUser($slug[0], $this->user);
         }
+
         $this->request->addRouteParameters(array('slugs' => array_keys($slugs)));
 
         ob_start();
@@ -228,7 +211,9 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $output = ob_get_contents();
         ob_end_clean();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode($slugs));
+        $output = $this->removeOutputDatetime($output, true);
+
+        $this->assertEquals($output, $slugs);
     }
 
     public function testTotalMembersActionWithNonBadSlug()
@@ -240,7 +225,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $output = ob_get_contents();
         ob_end_clean();
 
-        $this->assertJsonStringEqualsJsonString($output, json_encode(array($slug => array())));
+        $this->assertEquals(json_decode($output, true), array());
     }
 
     /**
@@ -248,14 +233,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
      */
     public function testUpdateMetaAction($slug)
     {
-        $this->addSlugToCache($slug, array(
-            array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            )
-        ));
+        $this->repository->addUser($slug, $this->user);
 
         $this->request->addRouteParameters(array('slug' => $slug));
 
@@ -267,34 +245,13 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($output, 'success');
     }
 
-    /**
-     * @dataProvider getSlugs
-     */
-    public function testUpdateMetaActionWithNonBadSlug($slug)
-    {
-        $this->request->addRouteParameters(array('slug' => $slug));
-
-        ob_start();
-        $this->controller->updateMetaAction();
-        $output = ob_get_contents();
-        ob_end_clean();
-
-        $this->assertEquals($output, 'error');
-    }
 
     /**
      * @dataProvider getSlugs
      */
     public function testRemoveMemberAction($slug)
     {
-        $this->addSlugToCache($slug, array(
-            array(
-                'slug' => $this->user->Slug,
-                'name' => $this->user->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            )
-        ));
+        $this->repository->addUser($slug, $this->user);
 
         $this->request->addRouteParameters(array('slug' => $slug));
 
@@ -338,7 +295,7 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     /**
      * Generates a UUID v4.
      */
-    private function uuidV4()
+    protected function uuidV4()
     {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
 
@@ -363,13 +320,26 @@ class HeartbeatCmsControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Stores the slug with members to cache.
-     *
-     * @param string $slug
-     * @param array $members
+     * @param string $json
+     * @papram bool $multiSlugs
+     * @return array
      */
-    private function addSlugToCache($slug, array $members = array())
+    protected function removeOutputDatetime($json, $multiSlugs = false)
     {
-        $this->cache->put(sprintf('active-edits-%s', $slug), $members, 60);
+        $array = json_decode($json, true);
+
+        foreach ($array as &$item) {
+            if ($multiSlugs) {
+                foreach ($item as &$v) {
+                    unset($v['added_at']);
+                    unset($v['modified_at']);
+                }
+            } else {
+                unset($item['added_at']);
+                unset($item['modified_at']);
+            }
+        }
+
+        return $array;
     }
 }

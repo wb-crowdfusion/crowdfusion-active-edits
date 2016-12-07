@@ -1,6 +1,10 @@
 # CHANGELOG
 
 
+## v2.1.0
+* issue #15: Convert Memcached to MySQL.
+
+
 ## v2.0.3
 * issue #11: Added warning popup alerting with the user who's editing object.
 * issue #12: Fixed realtime caching of edit users.

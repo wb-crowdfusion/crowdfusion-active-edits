@@ -2,59 +2,34 @@
 
 namespace CrowdFusion\Plugin\ActiveEditsPlugin\Controller;
 
+use CrowdFusion\Plugin\ActiveEditsPlugin\Repository\ActiveEditRepository;
+use CrowdFusion\Plugin\ActiveEditsPlugin\Entity\User;
+
 /**
  * Store list of active members per slug in cache.
  */
 class HeartbeatCmsController extends \AbstractCmsController
 {
-    /** @var \CacheStoreInterface */
-    protected $cacheStore;
+    /** @var ActiveEditRepository */
+    protected $repository;
+
+    /** @var \DateFactory */
+    protected $dateFactory;
 
     /**
-     * The number of seconds a cache value is stored. (default: 180 seconds)
-     *
-     * @var int
+     * @param ActiveEditRepository $repository
      */
-    protected $ttl = 180;
-
-    /**
-     * @param int $ttl
-     */
-    public function setActiveEditTtl($ttl = 180)
+    public function setActiveEditRepository(ActiveEditRepository $repository)
     {
-        $this->ttl = \NumberUtils::bound($ttl, 10, 14400);
+        $this->repository = $repository;
     }
 
     /**
-     * @return int
+     * @param \DateFactory $dateFactory
      */
-    protected function getTtl()
+    public function setDateFactory(\DateFactory $dateFactory)
     {
-        return $this->ttl;
-    }
-
-    /**
-     * @return \Node
-     */
-    protected function getUser()
-    {
-        return $this->RequestContext->getUser();
-    }
-
-    /**
-     * @param \DateFactory $DateFactory
-     */
-    public function setDateFactory(\DateFactory $DateFactory)
-    {
-        $this->DateFactory = $DateFactory;
-    }
-
-    /**
-     * @param \CacheStoreInterface $cacheStore
-     */
-    public function setPrimaryCacheStore(\CacheStoreInterface $cacheStore)
-    {
-        $this->cacheStore = $cacheStore;
+        $this->dateFactory = $dateFactory;
     }
 
     /**
@@ -62,18 +37,10 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function totalMembersAction()
     {
-        $members = array();
-        $slugs   = (array)$this->Request->getParameter('slugs');
-        foreach ($slugs as $slug) {
-            $members[$slug] = $this->loadMembersFromCache($slug);
-            foreach ($members[$slug] as $index => $member) {
-                if ($this->isMemberExpired($member['pingedAt'])) {
-                    unset($members[$slug][$index]);
-                }
-            }
-        }
+        $slugs = (array)$this->Request->getParameter('slugs');
+        $users = $this->repository->getUsers($slugs);
 
-        echo \JSONUtils::encode($members);
+        echo \JSONUtils::encode($users);
     }
 
     /**
@@ -81,10 +48,20 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function getMembersAction()
     {
-        $this->getLock($slug = $this->Request->getParameter('slug'));
-        $members = $this->updateMembersToCache($slug, $this->loadMembersFromCache($slug));
-        $this->releaseLock($slug);
-        echo \JSONUtils::encode($members);
+        $slug = $this->Request->getParameter('slug');
+
+        if (!$this->repository->hasUser($slug, $this->getUser()->Slug)) {
+            $this->repository->addUser($slug, $this->getUser());
+        }
+
+        // updated edit session
+        $this->repository->updateUserProperties($slug, $this->getUser(), [
+            'modified_at' => $this->dateFactory->newStorageDate()
+        ]);
+
+        $users = $this->repository->getUsers([$slug]);
+
+        echo \JSONUtils::encode($users[$slug]);
     }
 
     /**
@@ -93,20 +70,8 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function removeMemberAction()
     {
-        $this->getLock($slug = $this->Request->getParameter('slug'));
-
-        $isDeleted = false;
-        $members   = $this->loadMembersFromCache($slug);
-        foreach ($members as $index => $member) {
-            if ($member['slug'] == $this->getUser()->Slug) {
-                unset($members[$index]);
-                $isDeleted = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
-                break;
-            }
-        }
-
-        $this->releaseLock($slug);
-
+        $slug = $this->Request->getParameter('slug');
+        $isDeleted = $this->repository->removeUser($slug, $this->getUser()->Slug);
         echo $isDeleted ? 'success' : 'error';
     }
 
@@ -116,163 +81,32 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function updateMetaAction()
     {
-        $this->getLock($slug = $this->Request->getParameter('slug'));
+        $slug = $this->Request->getParameter('slug');
 
-        $isUpdated = false;
-        $members   = $this->loadMembersFromCache($slug);
-        foreach ($members as $index => $member) {
-            if ($member['slug'] == $this->getUser()->Slug) {
-                $members[$index]['updateMeta'] = true;
-                $isUpdated = $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
-                break;
-            }
+        if (!$this->repository->hasUser($slug, $this->getUser()->Slug)) {
+            $this->repository->addUser($slug, $this->getUser());
         }
 
-        $this->releaseLock($slug);
+        $isUpdated = $this->repository->updateUserProperties($slug, $this->getUser(), [
+            'meta_updated' => 1,
+            'modified_at' => $this->dateFactory->newStorageDate()
+        ]);
 
         echo $isUpdated ? 'success' : 'error';
     }
 
     /**
-     * Returns list of members for given slug(s).
-     *
-     * @param string $slug
-     *
-     * @return array List of active members
+     * @return User
      */
-    protected function loadMembersFromCache($slug)
+    protected function getUser()
     {
-        if (!$members = $this->cacheStore->get($this->generateKey($slug))) {
-            $members = array();
-        }
+        /** @var  $userNode \Node */
+        $userNode = $this->RequestContext->getUser();
 
-        return array_values($members);
-    }
-
-    /**
-     * Updates slug members.
-     *
-     * @param string $slug
-     * @param array $members
-     *
-     * @return array List of active members
-     */
-    protected function updateMembersToCache($slug, array $members = array())
-    {
-        $found = false;
-
-        foreach ($members as $index => $member) {
-            if ($member['slug'] == $this->getUser()->Slug) {
-                $found = $index;
-                continue;
-            }
-
-            if ($this->isMemberExpired($member['pingedAt'])) {
-                unset($members[$index]);
-            }
-        }
-
-        if ($found !== false) {
-            $member = $members[$found];
-        } else {
-            $member = array(
-                'slug' => $this->getUser()->Slug,
-                'name' => $this->getUser()->Title,
-                'pingedAt' => null,
-                'updateMeta' => false,
-            );
-        }
-
-        $member['pingedAt'] = $this->DateFactory->newStorageDate();
-
-        if ($found !== false) {
-            $members[$found] = $member;
-        } else {
-            $members[] = $member;
-        }
-
-        $this->cacheStore->put($this->generateKey($slug), $members, $this->getTtl());
-
-        return array_values($members);
-    }
-
-    /**
-     * Checks if member edit session expired.
-     *
-     * @param string $pingedAt
-     *
-     * @return Boolean
-     */
-    protected function isMemberExpired($pingedAt)
-    {
-        if ($pingedAt) {
-            $date = $this->DateFactory->newStorageDate(strtotime($pingedAt))->add(
-                new \DateInterval(sprintf('PT%dS', $this->getTtl()))
-            );
-
-            return $date < $this->DateFactory->newStorageDate();
-        }
-
-        return false;
-    }
-
-    /**
-     * Creates lock for the given slug.  Lock will only last for 10 seconds.
-     *
-     * @param string $slug
-     * @throws \Exception
-     */
-    protected function getLock($slug)
-    {
-        $i = 0;
-        do {
-            if ($existingLock = $this->cacheStore->get($this->getLockKey($slug))) {
-                usleep(200000); // 200 milliseconds
-                $i += 0.2;
-            }
-        } while ($existingLock && $i < 5);
-
-        if ($existingLock) {
-            throw new \Exception(
-                sprintf('Failed to acquire lock for slug "%s", currently locked by "%s".', $slug, $existingLock)
-            );
-        }
-
-        $this->cacheStore->put($this->getLockKey($slug), $this->getUser()->Slug, 10);
-    }
-
-    /**
-     * Releases lock.
-     *
-     * @param string $slug
-     */
-    protected function releaseLock($slug)
-    {
-        $this->cacheStore->delete($this->getLockKey($slug));
-    }
-
-    /**
-     * Generates lock key.
-     *
-     * @param string $slug
-     *
-     * @return string
-     */
-    protected function getLockKey($slug)
-    {
-        return $this->generateKey($slug, 'active-edits-lock');
-    }
-
-    /**
-     * Generates key.
-     *
-     * @param string $slug
-     * @param string $prefix
-     *
-     * @return string
-     */
-    protected function generateKey($slug, $prefix = 'active-edits')
-    {
-        return sprintf('%s-%s', $prefix, \SlugUtils::createSlug($slug));
+        //map this Node to User Entitity
+        $userEntity = new User;
+        $userEntity->setSlug($userNode->Slug);
+        $userEntity->setTitle($userNode->Title);
+        return $userEntity;
     }
 }
