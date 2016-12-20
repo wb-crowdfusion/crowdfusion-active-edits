@@ -34,8 +34,8 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
         $this->request = new \Request($InputClean, '/');
 
         $this->user = new User();
-        $this->user->Slug = 'jonnytest';
-        $this->user->Title = 'Jonny Test';
+        $this->user->setSlug('jonnytest');
+        $this->user->setTitle('Jonny Test');
 
         $this->requestContext = new \RequestContext();
         $this->requestContext->setUser($this->user);
@@ -109,9 +109,9 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($output, array(array(
             'slug' => $slug,
-            'user_slug' => $this->user->Slug,
-            'user_name' => $this->user->Title,
-            'meta_updated' => false
+            'user_slug' => $this->user->getSlug(),
+            'user_name' => $this->user->getTitle(),
+            'meta_updated' => false,
         )));
     }
 
@@ -133,9 +133,9 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($output, array(array(
             'slug' => $slug,
-            'user_slug' => $this->user->Slug,
-            'user_name' => $this->user->Title,
-            'meta_updated' => false
+            'user_slug' => $this->user->getSlug(),
+            'user_name' => $this->user->getTitle(),
+            'meta_updated' => false,
         )));
     }
 
@@ -148,38 +148,38 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
 
         // set new user
         $user = new User();
-        $user->Slug = 'bobdoll';
-        $user->Title = 'Bob Doll';
+        $user->setSlug('bobdoll');
+        $user->setTitle('Bob Doll');
         // update logged-in user
         $this->requestContext->setUser($user);
 
         $this->request->addRouteParameters(array('slug' => $slug));
 
         ob_start();
-        $this->controller->getMembersAction($this instanceof HeartbeatCmsControllerInMemoryTest);
+        $this->controller->getMembersAction();
         $output = ob_get_contents();
         ob_end_clean();
 
         $output = $this->removeOutputDatetime($output);
 
         // sort alphabeticly
-        if ($output[0]['user_slug'] === $user->Slug) {
+        if ($output[0]['user_slug'] === $user->getSlug()) {
             $output = array_reverse($output);
         }
 
         $this->assertEquals($output, array(
             array(
                 'slug' => $slug,
-                'user_slug' => $this->user->Slug,
-                'user_name' => $this->user->Title,
-                'meta_updated' => false
+                'user_slug' => $this->user->getSlug(),
+                'user_name' => $this->user->getTitle(),
+                'meta_updated' => false,
             ),
             array(
                 'slug' => $slug,
-                'user_slug' => $user->Slug,
-                'user_name' => $user->Title,
-                'meta_updated' => false
-            )
+                'user_slug' => $user->getSlug(),
+                'user_name' => $user->getTitle(),
+                'meta_updated' => false,
+            ),
         ));
 
         // reload logged-in user
@@ -196,8 +196,8 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
 
             $slugs[$slug[0]][] = array(
                 'slug' => $slug[0],
-                'user_slug' => $this->user->Slug,
-                'user_name' => $this->user->Title,
+                'user_slug' => $this->user->getSlug(),
+                'user_name' => $this->user->getTitle(),
                 'meta_updated' => false,
             );
 
@@ -245,7 +245,6 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($output, 'success');
     }
 
-
     /**
      * @dataProvider getSlugs
      */
@@ -285,7 +284,7 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
     {
         $slugs = array();
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             $slugs[] = array($this->uuidV4());
         }
 
@@ -322,6 +321,7 @@ class HeartbeatCmsControllerInMemoryTest extends \PHPUnit_Framework_TestCase
     /**
      * @param string $json
      * @papram bool $multiSlugs
+     *
      * @return array
      */
     protected function removeOutputDatetime($json, $multiSlugs = false)

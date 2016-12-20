@@ -35,7 +35,7 @@ class ConfigFilterer extends \AbstractFilterer
     }
 
     /**
-     * Render the active edit config parameters
+     * Render the active edit config parameters.
      *
      * @return string
      */

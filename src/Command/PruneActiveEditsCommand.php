@@ -5,8 +5,6 @@ namespace CrowdFusion\Plugin\ActiveEditsPlugin\Command;
 use CrowdFusion\Plugin\ActiveEditsPlugin\Repository\ActiveEditRepository;
 
 /**
- * @package CrowdFusion\Plugin\ActiveEditsPlugin\Controller;
- *
  * @author @author Onjefu Efada <onjefu.efada@tmz.com>
  *
  * Polls active edits table to expired users.
@@ -26,7 +24,7 @@ class PruneActiveEditsCommand extends \AbstractCliController
     }
 
     /**
-     * CLI Runner
+     * CLI Runner.
      */
     public function run()
     {

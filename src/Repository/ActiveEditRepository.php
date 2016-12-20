@@ -16,7 +16,7 @@ interface ActiveEditRepository
     public function getUsers(array $slugs);
 
     /**
-     * Check if user exists for a specific slug
+     * Check if user exists for a specific slug.
      *
      * @param string $slug
      * @param string $userSlug
@@ -29,7 +29,7 @@ interface ActiveEditRepository
      * Adds a user to a given slug.
      *
      * @param string $slug
-     * @param User $user
+     * @param User   $user
      *
      * @return int
      */
@@ -37,10 +37,12 @@ interface ActiveEditRepository
 
     /**
      * Updates specific user properties of a given slug.
+     *
      * @TODO, rename method. We are updating the usersActiveEdit and not the user
+     *
      * @param string $slug
-     * @param User $user
-     * @param array $properties
+     * @param User   $user
+     * @param array  $properties
      *
      * @return int
      */
@@ -62,5 +64,4 @@ interface ActiveEditRepository
      * @return bool|int
      */
     public function purgeStale();
-
 }

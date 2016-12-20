@@ -3,26 +3,53 @@
 namespace CrowdFusion\Plugin\ActiveEditsPlugin\Entity;
 
 /**
- * Class user
- * Quick little entity for defining user properies.
- * @package CrowdFusion\Plugin\ActiveEditsPlugin\Entity
- *
- * @author Onjefu Efada <onjefu.efada@tmz.com>
- *
+ * Quick little entity for defining user properties.
  */
-
 class User
 {
-    public $Slug;
-    public $Title;
+    /** @var string */
+    protected $slug;
 
-    public function setSlug($slug = null)
+    /** @var string */
+    protected $title;
+
+    /**
+     * @param string $slug
+     *
+     * @return self
+     */
+    public function setSlug($slug)
     {
-        $this->Slug = $slug;
+        $this->slug = $slug;
+
+        return $this;
     }
 
-    public function setTitle($title = null)
+    /**
+     * @return string
+     */
+    public function getSlug()
     {
-        $this->Title = $title;
+        return $this->slug;
+    }
+
+    /**
+     * @param string $title
+     *
+     * @return self
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
     }
 }

@@ -1,6 +1,11 @@
 # CHANGELOG
 
 
+## v2.1.1
+* issue #18: Fixed checking expire value in queries.
+* Fix PHP coding standards.
+
+
 ## v2.1.0
 * issue #15: Convert Memcached to MySQL.
 

@@ -13,20 +13,20 @@ class AssetListener
     public function generateAsset(\Transport $output)
     {
         $output->String .= <<<EOD
-            {% asset js?src=/js/ActiveEdits.js&pack=true %}
+{% asset js?src=/js/ActiveEdits.js&pack=true %}
 
-            {% asset css?src=/css/active-edits.css&min=true %}
-            {% asset css?src=/css/active-edits-ie7.css&min=true&iecond=IE 7 %}
+{% asset css?src=/css/active-edits.css&min=true %}
+{% asset css?src=/css/active-edits-ie7.css&min=true&iecond=IE 7 %}
 
-            <script language="JavaScript" type="text/javascript">
+<script language="JavaScript" type="text/javascript">
 
-    	        $(document).ready(function() {
-                    ActiveEdits.initList({
-                        {% filter activeeditconfig %}
-                    });
-    	        });
+    $(document).ready(function() {
+        ActiveEdits.initList({
+            {% filter activeeditconfig %}
+        });
+    });
 
-            </script>
+</script>
 EOD;
     }
 }

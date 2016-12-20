@@ -19,14 +19,14 @@ class MySQLActiveEditRepository implements ActiveEditRepository
     protected $dateFactory;
 
     /**
-     * @param int $expiry
-     * @param string $tableName
-     * @param \DateFactory $dateFactory
+     * @param int                  $expiry
+     * @param string               $tableName
+     * @param \DateFactory         $dateFactory
      * @param \DataSourceInterface $dsn
      */
     public function __construct($expiry, $tableName, \DateFactory $dateFactory, \DataSourceInterface $dsn)
     {
-        $this->expiry = (int)$expiry;
+        $this->expiry = (int) $expiry;
         $this->tableName = $tableName;
         $this->dateFactory = $dateFactory;
         $this->dsn = $dsn;
@@ -43,10 +43,11 @@ class MySQLActiveEditRepository implements ActiveEditRepository
 
         $inQuery = implode(',', array_fill(0, count($slugs), '?'));
 
-        $timestamp = time() - $this->expiry;
+        $datetime = $this->dateFactory->newStorageDate();
+        $datetime->modify(sprintf('-%d seconds', $this->expiry));
 
         $statement = $this->getConnection()->prepare(
-            sprintf('select * from %s where slug in (%s) and modified_at >= %d', $this->tableName, $inQuery, $timestamp)
+            sprintf('select * from %s where slug in (%s) and modified_at >= \'%s\'', $this->tableName, $inQuery, $datetime->format('Y-m-d H:i:s'))
         );
 
         $this->execute($statement, $slugs);
@@ -57,7 +58,7 @@ class MySQLActiveEditRepository implements ActiveEditRepository
                 $users[$user['slug']] = [];
             }
 
-            $user['meta_updated'] = (bool)$user['meta_updated'];
+            $user['meta_updated'] = (bool) $user['meta_updated'];
 
             $users[$user['slug']][] = $user;
         }
@@ -82,7 +83,7 @@ class MySQLActiveEditRepository implements ActiveEditRepository
 
         $this->execute($statement);
 
-        return 1 === $statement->fetchColumn();
+        return 1 === (int) $statement->fetchColumn();
     }
 
     /**
@@ -94,16 +95,19 @@ class MySQLActiveEditRepository implements ActiveEditRepository
             return false;
         }
 
+        if ($this->hasUser($slug, $user->getSlug())) {
+            return $this->updateUserProperties($slug, $user);
+        }
+
         $statement = $this->getConnection()->prepare(
-            sprintf('insert ignore into %s (slug, user_slug, user_name, meta_updated, added_at, modified_at) values (?, ?, ?, ?, ?, ?)',
-                $this->tableName)
+            sprintf('insert ignore into %s (slug, user_slug, user_name, meta_updated, added_at, modified_at) values (?, ?, ?, ?, ?, ?)', $this->tableName)
         );
         $statement->bindValue(1, $slug);
-        $statement->bindValue(2, $user->Slug);
-        $statement->bindValue(3, $user->Title);
+        $statement->bindValue(2, $user->getSlug());
+        $statement->bindValue(3, $user->getTitle());
         $statement->bindValue(4, false, \PDO::PARAM_BOOL);
-        $statement->bindValue(5, $this->dateFactory->newStorageDate(), \PDO::PARAM_INT);
-        $statement->bindValue(6, $this->dateFactory->newStorageDate(), \PDO::PARAM_INT);
+        $statement->bindValue(5, $this->dateFactory->newStorageDate());
+        $statement->bindValue(6, $this->dateFactory->newStorageDate());
 
         return $this->execute($statement);
     }
@@ -111,29 +115,32 @@ class MySQLActiveEditRepository implements ActiveEditRepository
     /**
      * {@inheritdoc}
      */
-    public function updateUserProperties($slug, User $user, array $properies)
+    public function updateUserProperties($slug, User $user, array $properties = [])
     {
         if (empty($slug) || empty($user)) {
             return false;
         }
 
-        if (!$this->hasUser($slug, $user->Slug)) {
+        if (!$this->hasUser($slug, $user->getSlug())) {
             $this->addUser($slug, $user);
         }
 
+        if (!isset($properties['modified_at'])) {
+            $properties['modified_at'] = $this->dateFactory->newStorageDate();
+        }
+
         $setters = [];
-        foreach ($properies as $key => $value) {
+        foreach ($properties as $key => $value) {
             $setters[] = sprintf('%s = :%s', $key, $key);
         }
 
         $statement = $this->getConnection()->prepare(
-            sprintf('update %s set %s where slug = :slug and user_slug = :user_slug', $this->tableName,
-                implode(', ', $setters))
+            sprintf('update %s set %s where slug = :slug and user_slug = :user_slug', $this->tableName, implode(', ', $setters))
         );
-        $statement->bindParam(':slug', $slug);
-        $statement->bindParam(':user_slug', $user->Slug);
+        $statement->bindValue(':slug', $slug);
+        $statement->bindValue(':user_slug', $user->getSlug());
 
-        foreach ($properies as $key => $value) {
+        foreach ($properties as $key => $value) {
             $statement->bindValue(sprintf(':%s', $key), $value);
         }
 
@@ -167,16 +174,16 @@ class MySQLActiveEditRepository implements ActiveEditRepository
             return false;
         }
 
-        $timestamp = time() - $this->expiry;
+        $datetime = $this->dateFactory->newStorageDate();
+        $datetime->modify(sprintf('-%d seconds', $this->expiry));
 
         $statement = $this->getConnection()->prepare(
-            sprintf('select count(1) from %s where modified_at >= :modified_at', $this->tableName)
+            sprintf('select count(1) from %s where modified_at >= \'%s\'', $this->tableName, $datetime->format('Y-m-d H:i:s'))
         );
-        $statement->bindParam(':modified_at', $timestamp);
 
         $this->execute($statement);
 
-        $totalExpired = $statement->fetchColumn();
+        $totalExpired = (int) $statement->fetchColumn();
 
         if (0 === $totalExpired) {
             $statement = $this->getConnection()->prepare(
@@ -187,9 +194,8 @@ class MySQLActiveEditRepository implements ActiveEditRepository
         }
 
         $statement = $this->getConnection()->prepare(
-            sprintf('delete from %s where modified_at < :modified_at', $this->tableName)
+            sprintf('delete from %s where modified_at < \'%s\'', $this->tableName, $datetime->format('Y-m-d H:i:s'))
         );
-        $statement->bindParam(':modified_at', $timestamp);
 
         return $this->execute($statement);
     }
@@ -201,14 +207,14 @@ class MySQLActiveEditRepository implements ActiveEditRepository
     {
         return $this->dsn
             ->getConnectionsForReadWrite()
-            ->offsetGet(0)// \ConnectionCouplet
-            ->getConnection()// \MySQLDatabase
+            ->offsetGet(0) // \ConnectionCouplet
+            ->getConnection() // \MySQLDatabase
             ->getConnection();
     }
 
     /**
      * @param \PDOStatement $statement
-     * @param array|null $params
+     * @param array|null    $params
      *
      * @return int
      *
@@ -224,7 +230,7 @@ class MySQLActiveEditRepository implements ActiveEditRepository
 
             return $statement->rowCount();
         } catch (\PDOException $e) {
-            $tries++;
+            ++$tries;
 
             if ($tries > 1) {
                 throw new \Exception($e->getMessage());

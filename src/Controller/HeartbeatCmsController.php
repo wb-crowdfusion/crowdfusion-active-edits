@@ -37,9 +37,8 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     public function totalMembersAction()
     {
-        $slugs = (array)$this->Request->getParameter('slugs');
+        $slugs = (array) $this->Request->getParameter('slugs');
         $users = $this->repository->getUsers($slugs);
-
         echo \JSONUtils::encode($users);
     }
 
@@ -49,49 +48,36 @@ class HeartbeatCmsController extends \AbstractCmsController
     public function getMembersAction()
     {
         $slug = $this->Request->getParameter('slug');
-
-        if (!$this->repository->hasUser($slug, $this->getUser()->Slug)) {
-            $this->repository->addUser($slug, $this->getUser());
-        }
-
-        // updated edit session
-        $this->repository->updateUserProperties($slug, $this->getUser(), [
-            'modified_at' => $this->dateFactory->newStorageDate()
-        ]);
-
+        $this->repository->addUser($slug, $this->getUser());
         $users = $this->repository->getUsers([$slug]);
-
-        echo \JSONUtils::encode($users[$slug]);
+        if (isset($users[$slug])) {
+            echo \JSONUtils::encode($users[$slug]);
+        } else {
+            echo \JSONUtils::encode([]);
+        }
     }
 
     /**
      * Removes the current logged-in user for a given slug.
-     * Echoes string with success or error
+     * Echoes string with success or error.
      */
     public function removeMemberAction()
     {
         $slug = $this->Request->getParameter('slug');
-        $isDeleted = $this->repository->removeUser($slug, $this->getUser()->Slug);
+        $isDeleted = $this->repository->removeUser($slug, $this->getUser()->getSlug());
         echo $isDeleted ? 'success' : 'error';
     }
 
     /**
      * Sets the current logged-in user for a given slug with "updateMeta=true".
-     * Echoes string with success or error
+     * Echoes string with success or error.
      */
     public function updateMetaAction()
     {
         $slug = $this->Request->getParameter('slug');
-
-        if (!$this->repository->hasUser($slug, $this->getUser()->Slug)) {
-            $this->repository->addUser($slug, $this->getUser());
-        }
-
         $isUpdated = $this->repository->updateUserProperties($slug, $this->getUser(), [
             'meta_updated' => 1,
-            'modified_at' => $this->dateFactory->newStorageDate()
         ]);
-
         echo $isUpdated ? 'success' : 'error';
     }
 
@@ -100,13 +86,17 @@ class HeartbeatCmsController extends \AbstractCmsController
      */
     protected function getUser()
     {
-        /** @var  $userNode \Node */
+        /** @var $userNode \Node */
         $userNode = $this->RequestContext->getUser();
 
-        //map this Node to User Entitity
-        $userEntity = new User;
-        $userEntity->setSlug($userNode->Slug);
-        $userEntity->setTitle($userNode->Title);
-        return $userEntity;
+        if ($userNode instanceof \Node) {
+            $userEntity = new User();
+            $userEntity->setSlug($userNode->Slug);
+            $userEntity->setTitle($userNode->Title);
+
+            $userNode = $userEntity;
+        }
+
+        return $userNode;
     }
 }

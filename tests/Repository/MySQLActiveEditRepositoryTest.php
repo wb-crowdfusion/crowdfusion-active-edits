@@ -1,12 +1,11 @@
 <?php
 
-namespace CrowdFusion\Tests\Plugin\ActiveEditsPlugin\Controller;
+namespace CrowdFusion\Tests\Plugin\ActiveEditsPlugin\Repository;
 
 use CrowdFusion\Tests\Plugin\ActiveEditsPlugin\MySingleDBDataSource;
 use CrowdFusion\Plugin\ActiveEditsPlugin\Repository\MySQLActiveEditRepository;
-use CrowdFusion\Plugin\ActiveEditsPlugin\Entity\User;
 
-class HeartbeatCmsControllerMySqlTest extends HeartbeatCmsControllerInMemoryTest
+class MySQLActiveEditRepositoryTest extends InMemoryActiveEditRepositoryTest
 {
     protected function setUp()
     {
@@ -16,7 +15,7 @@ class HeartbeatCmsControllerMySqlTest extends HeartbeatCmsControllerInMemoryTest
 
         $TransactionManager = $this->getMock('TransactionManagerInterface');
 
-        $DateFactory = new \DateFactory('America/Los_Angeles', 'America/Los_Angeles');
+        $this->dateFactory = new \DateFactory('America/Los_Angeles', 'America/Los_Angeles');
 
         $connectionInfo = array(
             'host' => 'localhost',
@@ -29,7 +28,7 @@ class HeartbeatCmsControllerMySqlTest extends HeartbeatCmsControllerInMemoryTest
         $mySQLDatabase = new \MySQLDatabase(
             $Logger,
             $this->getMock('Benchmark'),
-            $DateFactory,
+            $this->dateFactory,
             2
         );
 
@@ -53,8 +52,6 @@ class HeartbeatCmsControllerMySqlTest extends HeartbeatCmsControllerInMemoryTest
             return;
         }
 
-        $this->repository = new MySQLActiveEditRepository(45, 'active_edit', $DateFactory, $DataSource);
-
-        $this->controller->setActiveEditRepository($this->repository);
+        $this->repository = new MySQLActiveEditRepository(45, 'active_edit', $this->dateFactory, $DataSource);
     }
 }

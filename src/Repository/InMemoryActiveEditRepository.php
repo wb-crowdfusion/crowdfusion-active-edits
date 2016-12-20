@@ -16,12 +16,12 @@ class InMemoryActiveEditRepository implements ActiveEditRepository
     protected $data = [];
 
     /**
-     * @param int $expiry
+     * @param int          $expiry
      * @param \DateFactory $dateFactory
      */
     public function __construct($expiry, \DateFactory $dateFactory)
     {
-        $this->expiry = (int)$expiry;
+        $this->expiry = (int) $expiry;
         $this->dateFactory = $dateFactory;
     }
 
@@ -45,7 +45,6 @@ class InMemoryActiveEditRepository implements ActiveEditRepository
                     $date = $this->dateFactory->newStorageDate($user['modified_at'])->add(
                         new \DateInterval(sprintf('PT%dS', $this->expiry))
                     );
-
                     if ($date >= $now) {
                         $users[$slug][] = $user;
                     }
@@ -81,14 +80,20 @@ class InMemoryActiveEditRepository implements ActiveEditRepository
             $this->data[$slug] = [];
         }
 
-        if (!isset($this->data[$slug][$user->Slug])) {
-            $this->data[$slug][$user->Slug] = [
+        if (isset($this->data[$slug][$user->getSlug()])) {
+            $this->data[$slug][$user->getSlug()]['modified_at'] = $this->dateFactory->newStorageDate();
+
+            return true;
+        }
+
+        if (!isset($this->data[$slug][$user->getSlug()])) {
+            $this->data[$slug][$user->getSlug()] = [
                 'slug' => $slug,
-                'user_slug' => $user->Slug,
-                'user_name' => $user->Title,
+                'user_slug' => $user->getSlug(),
+                'user_name' => $user->getTitle(),
                 'meta_updated' => false,
                 'added_at' => $this->dateFactory->newStorageDate(),
-                'modified_at' => $this->dateFactory->newStorageDate()
+                'modified_at' => $this->dateFactory->newStorageDate(),
             ];
 
             return true;
@@ -100,20 +105,23 @@ class InMemoryActiveEditRepository implements ActiveEditRepository
     /**
      * {@inheritdoc}
      */
-    public function updateUserProperties($slug, User $user, array $properies)
+    public function updateUserProperties($slug, User $user, array $properties = [])
     {
         if (empty($slug) || empty($user) || empty($this->data)) {
             return false;
         }
 
-        if (!$this->hasUser($slug, $user->Slug)) {
+        if (!$this->hasUser($slug, $user->getSlug())) {
             $this->addUser($slug, $user);
         }
 
+        if (isset($this->data[$slug][$user->getSlug()])) {
+            if (!isset($properties['modified_at'])) {
+                $properties['modified_at'] = $this->dateFactory->newStorageDate();
+            }
 
-        if (isset($this->data[$slug][$user->Slug])) {
-            foreach ($properies as $key => $value) {
-                $this->data[$slug][$user->Slug][$key] = $value;
+            foreach ($properties as $key => $value) {
+                $this->data[$slug][$user->getSlug()][$key] = $value;
             }
 
             return true;
@@ -145,15 +153,21 @@ class InMemoryActiveEditRepository implements ActiveEditRepository
      */
     public function purgeStale()
     {
-        $timestamp = time() - $this->expiry;
+        $now = $this->dateFactory->newStorageDate();
 
         foreach ($this->data as $slug => $users) {
             foreach ($users as $userSlug => $properties) {
-                if (isset($properties['modified_at']) && $userSlug['modified_at'] < $timestamp) {
-                    unset($this->data[$slug][$userSlug]);
+                if (isset($properties['modified_at'])) {
+                    $date = $this->dateFactory->newStorageDate($properties['modified_at'])->add(
+                        new \DateInterval(sprintf('PT%dS', $this->expiry))
+                    );
+                    if ($date < $now) {
+                        unset($this->data[$slug][$userSlug]);
+                    }
                 }
             }
         }
+
         return true;
     }
 }
